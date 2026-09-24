@@ -178,11 +178,11 @@ const PRINCIPLES = [
 function Principles() {
   return (
     <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-8 sm:pt-32">
-      <h2 data-reveal className="max-w-4xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
+      <h2 data-reveal className="max-w-4xl font-display text-4xl leading-[1.22] font-black tracking-tight sm:text-6xl sm:leading-[1.02]">
         Tell it in your own words. We&apos;ll keep the details <span className="mark-lime mark-sweep">straight.</span>
       </h2>
 
-      <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-5 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
         {PRINCIPLES.map((p, i) => (
           <article
             key={p.title}
@@ -231,12 +231,12 @@ function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
         <div data-reveal>
           <p className="font-display text-sm font-extrabold tracking-widest text-lime uppercase">Under the hood</p>
-          <h2 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
+          <h2 className="mt-4 max-w-3xl font-display text-4xl leading-[1.22] font-black tracking-tight sm:text-6xl sm:leading-[1.02]">
             The AI suggests. <span className="mark-lilac mark-sweep text-ink">The rules decide.</span>
           </h2>
         </div>
 
-        <ol className="mt-14 grid gap-px overflow-hidden rounded-[2rem] bg-cream/15 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-10 grid sm:mt-14 gap-px overflow-hidden rounded-[2rem] bg-cream/15 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s, i) => (
             <li key={s.n} className="bg-ink p-7 sm:p-8">
               {/* Animate the content, not the cell: the grid lines are the list's background. */}
@@ -264,7 +264,7 @@ function HowItWorks() {
 function ClosingCta() {
   return (
     <section data-reveal className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-8 sm:py-32">
-      <h2 className="mx-auto max-w-3xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
+      <h2 className="mx-auto max-w-3xl font-display text-4xl leading-[1.22] font-black tracking-tight sm:text-6xl sm:leading-[1.02]">
         Ready when <span className="mark-lilac mark-sweep">you are.</span>
       </h2>
       <p className="mx-auto mt-5 max-w-xl text-lg text-ink/80">
