@@ -47,7 +47,7 @@ function Hero() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-8">
       <div className="grid overflow-hidden rounded-[2.5rem] bg-violet lg:grid-cols-2">
-        <div className="px-7 py-12 sm:px-14 sm:py-20 lg:px-12 lg:py-16 xl:px-14">
+        <div className="px-7 py-12 sm:px-14 sm:py-20 lg:px-12 lg:py-14 xl:px-14">
           <h1 className="font-display text-5xl leading-[0.95] font-black tracking-tight text-cream sm:text-7xl lg:text-[3.6rem] xl:text-7xl">
             Your wishes,
             <br />
@@ -67,7 +67,18 @@ function Hero() {
               See how it works
             </a>
           </div>
-          <p className="mt-6 text-sm text-cream/70">About 5 minutes · No sign-up needed</p>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <a
+              href={REPO}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-2 border-cream/35 px-3.5 py-2 text-sm font-bold text-cream transition hover:border-lime hover:text-lime"
+            >
+              <GitHubIcon />
+              View the code on GitHub
+            </a>
+            <p className="text-sm text-cream/70">About 5 minutes · No sign-up needed</p>
+          </div>
         </div>
 
         {/* The left column sets the hero's height; the illustration fills the space and the
@@ -278,6 +289,14 @@ function Icon({ name }: { name: string }) {
   return (
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d={ICON_PATHS[name]} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GitHubIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z" />
     </svg>
   );
 }
