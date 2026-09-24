@@ -3,6 +3,9 @@ import { providersFromEnv } from "@/lib/llm";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { ChatRequestSchema } from "@/lib/schema";
 
+/** Worst case is several providers timing out in turn; give the chain room on serverless hosts. */
+export const maxDuration = 60;
+
 /**
  * POST /api/chat
  * Request:  ChatRequest  { messages, state }   (see lib/schema.ts)
