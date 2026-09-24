@@ -1,8 +1,15 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/wenup-logo-dark-mode.svg">
+    <img src="public/wenup-logo.svg" alt="Wenup" width="220">
+  </picture>
+</p>
+
 # Document Intake Assistant
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
-**Live demo:** _LIVE_URL_ · **Repo:** https://github.com/parthivabhani/Wenup-document-intake-assistant
+**Live demo:** _LIVE_URL_ · **Repo:** https://github.com/parthivabhani/Wenup-document-intake-assistant · **AI log:** [AI_LOG.md](AI_LOG.md)
 
 The core idea: **the model proposes, the code decides.** The LLM reads the conversation and proposes field updates as strict JSON. Deterministic, tested TypeScript validates every proposal against a schema, refuses contradictions and unbacked overwrites, and owns the state. The draft document is a pure function of that validated state.
 
@@ -240,7 +247,3 @@ The mock (`mockProvider.ts`) implements the same interface and returns the same 
 - Legal review of the document template. This version is explicitly fictional.
 
 ---
-
-## AI tools used
-
-Built with Claude Code (Claude Opus) as a pair programmer. See [AI_LOG.md](AI_LOG.md) for key prompts, what I changed or rejected, and why.
