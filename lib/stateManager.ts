@@ -8,6 +8,7 @@ import {
   type IntakeState,
   type RejectedUpdate,
 } from "./schema";
+import { CONFLICT_QUESTION_MARKER } from "./corrections";
 import { describeFieldValue, joinWithAnd } from "./format";
 
 /**
@@ -60,7 +61,20 @@ function setField(fields: IntakeFields, key: FieldKey, value: FieldValue | null)
 // Applying updates
 // ---------------------------------------------------------------------------
 
-export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyResult {
+export type ApplyOptions = {
+  /**
+   * Whether the user's own message shows they're correcting an earlier answer
+   * (see lib/corrections.ts). Without it, the model's is_correction flag is
+   * ignored. Defaults to false: the safe choice is to ask.
+   */
+  userSignalledCorrection?: boolean;
+};
+
+export function applyUpdates(
+  state: IntakeState,
+  updates: FieldUpdate[],
+  { userSignalledCorrection = false }: ApplyOptions = {},
+): ApplyResult {
   const rejected: RejectedUpdate[] = [];
 
   // 1. Validate each update's value against its field's schema.
@@ -88,9 +102,9 @@ export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyR
   }
 
   // 2. Overwrite guard: a known value may only be replaced by something
-  //    different when the model flags it as an explicit correction by the user.
-  //    Otherwise it's a contradiction, and we ask instead of guessing which is right.
-  const overwrite = findOverwriteConflicts(state, valid);
+  //    different when the model flags an explicit correction AND the user's
+  //    words back that up. Otherwise it's a contradiction: ask, don't guess.
+  const overwrite = findOverwriteConflicts(state, valid, userSignalledCorrection);
   for (const v of overwrite.blocked) {
     rejected.push({ update: v.update, kind: "conflict", reason: "Changes a known value without an explicit correction" });
   }
@@ -131,6 +145,7 @@ type ValidUpdate = { update: FieldUpdate; value: FieldValue | null };
 function findOverwriteConflicts(
   state: IntakeState,
   updates: ValidUpdate[],
+  correctionsAllowed: boolean,
 ): { blocked: ValidUpdate[]; conflicts: Conflict[] } {
   const blocked: ValidUpdate[] = [];
   const conflicts: Conflict[] = [];
@@ -138,12 +153,13 @@ function findOverwriteConflicts(
   for (const v of updates) {
     const { field, status, is_correction } = v.update;
     const current = getField(state.fields, field);
-    if (status !== "confirmed" || is_correction || v.value === null || current === null) continue;
+    if (status !== "confirmed" || v.value === null || current === null) continue;
+    if (is_correction && correctionsAllowed) continue;
     if (isCompatibleChange(current, v.value)) continue;
     blocked.push(v);
     conflicts.push({
       fields: [field],
-      question: `Earlier you told me ${describeFieldValue(field, current)}, but now it sounds like ${describeFieldValue(field, v.value)}. Which is correct?`,
+      question: `Earlier you told me ${describeFieldValue(field, current)}, but now it sounds like ${describeFieldValue(field, v.value)}. ${CONFLICT_QUESTION_MARKER}`,
     });
   }
 
@@ -221,7 +237,7 @@ export function findConflicts(fields: IntakeFields): Conflict[] {
   if (fields.has_children === false && names && names.length > 0) {
     conflicts.push({
       fields: ["has_children", "children_names"],
-      question: `I have a note that you don't have children, but you've also mentioned ${joinWithAnd(names)}. Could you clarify whether you have children, and if so, their names?`,
+      question: `I have a note that you don't have children, but you've also mentioned ${joinWithAnd(names)} as your children. ${CONFLICT_QUESTION_MARKER}`,
     });
   }
   return conflicts;

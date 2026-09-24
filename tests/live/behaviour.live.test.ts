@@ -26,8 +26,8 @@ const confirmed = (field: FieldUpdate["field"], value: FieldUpdate["value"]): Fi
 });
 const withFields = (...updates: FieldUpdate[]) => applyUpdates(emptyState(), updates).state;
 
-async function turn(state: IntakeState, userText: string, lastAssistant?: string) {
-  const messages: ChatMessage[] = [];
+async function turn(state: IntakeState, userText: string, lastAssistant?: string, history: ChatMessage[] = []) {
+  const messages: ChatMessage[] = [...history];
   if (lastAssistant) messages.push({ role: "assistant", content: lastAssistant });
   messages.push({ role: "user", content: userText });
   const logged: string[] = [];
@@ -41,6 +41,7 @@ async function turn(state: IntakeState, userText: string, lastAssistant?: string
     TRANSCRIPT,
     [
       `### ${expect.getState().currentTestName?.replace(/^.*> /, "")}`,
+      ...history.map((m) => `> **${m.role === "user" ? "User" : "Assistant"}:** ${m.content}`),
       lastAssistant ? `> **Assistant:** ${lastAssistant}` : null,
       `> **User:** ${userText}`,
       `> **Assistant:** ${res.reply}`,
@@ -125,6 +126,28 @@ run("live model behaviour", () => {
       "Are there any specific gifts you'd like to leave to someone?",
     );
     // Whether the model asks itself or the code blocks it, state must stay consistent
+    expect(res.state.fields.has_children).toBe(false);
+    expect(res.state.fields.children_names).toEqual([]);
+    expect(res.reply).toContain("?");
+  });
+
+  it("regression: with prior history, a contradiction is still not applied as a 'correction'", async () => {
+    // Found by manual UI testing: with this history in context, the model flagged
+    // "my son Tom" as a correction of "no children". The two-key rule blocks it.
+    const state = withFields(
+      confirmed("full_name", "Jane Smith"),
+      confirmed("home_address", "12 Orchard Lane, Bristol"),
+      confirmed("covers_worldwide_assets", true),
+      confirmed("has_children", false),
+      confirmed("executor.name", "James"),
+      confirmed("executor.relationship", "brother"),
+    );
+    const history: ChatMessage[] = [
+      { role: "assistant", content: "Should this document cover your assets worldwide, or only those in one country?" },
+      { role: "user", content: "Worldwide please. And I don't have any children." },
+      { role: "assistant", content: "Thanks! Any specific gifts you'd like to leave to someone?" },
+    ];
+    const res = await turn(state, "I'd like to leave my watch to my son Tom.", undefined, history);
     expect(res.state.fields.has_children).toBe(false);
     expect(res.state.fields.children_names).toEqual([]);
     expect(res.reply).toContain("?");

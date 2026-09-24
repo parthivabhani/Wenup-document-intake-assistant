@@ -15,6 +15,8 @@ const correct = (field: FieldUpdate["field"], value: FieldUpdate["value"]): Fiel
   is_correction: true,
 });
 
+const USER_CORRECTS = { userSignalledCorrection: true };
+
 function stateWith(updates: FieldUpdate[]): IntakeState {
   return applyUpdates(emptyState(), updates).state;
 }
@@ -53,9 +55,16 @@ describe("applyUpdates: valid and partial updates", () => {
 describe("applyUpdates: corrections", () => {
   it("an explicit correction overwrites the earlier answer", () => {
     const s1 = stateWith([set("executor.name", "James")]);
-    const { state, conflicts } = applyUpdates(s1, [correct("executor.name", "Sarah")]);
+    const { state, conflicts } = applyUpdates(s1, [correct("executor.name", "Sarah")], USER_CORRECTS);
     expect(state.fields.executor.name).toBe("Sarah");
     expect(conflicts).toHaveLength(0);
+  });
+
+  it("the model's correction flag alone is not enough without the user's words backing it", () => {
+    const s1 = stateWith([set("executor.name", "James")]);
+    const { state, conflicts } = applyUpdates(s1, [correct("executor.name", "Sarah")]);
+    expect(state.fields.executor.name).toBe("James");
+    expect(conflicts).toHaveLength(1);
   });
 
   it("a different value WITHOUT the correction flag is a contradiction: kept old value, asks", () => {
@@ -96,10 +105,11 @@ describe("applyUpdates: corrections", () => {
   it("correcting 'no children' to 'yes' with names is accepted", () => {
     const s1 = stateWith([set("has_children", false)]);
     expect(s1.fields.children_names).toEqual([]);
-    const { state, conflicts } = applyUpdates(s1, [
-      correct("has_children", true),
-      correct("children_names", ["Tom", "Sue"]),
-    ]);
+    const { state, conflicts } = applyUpdates(
+      s1,
+      [correct("has_children", true), correct("children_names", ["Tom", "Sue"])],
+      USER_CORRECTS,
+    );
     expect(conflicts).toHaveLength(0);
     expect(state.fields.has_children).toBe(true);
     expect(state.fields.children_names).toEqual(["Tom", "Sue"]);
@@ -107,7 +117,7 @@ describe("applyUpdates: corrections", () => {
 
   it("switching to 'has children' without names resets the list to unknown", () => {
     const s1 = stateWith([set("has_children", false)]);
-    const { state } = applyUpdates(s1, [correct("has_children", true)]);
+    const { state } = applyUpdates(s1, [correct("has_children", true)], USER_CORRECTS);
     expect(state.fields.children_names).toBeNull();
   });
 });
@@ -204,7 +214,7 @@ describe("applyUpdates: derived facts and contradictions", () => {
 
   it("even a flagged correction can't leave state inconsistent (no children + names)", () => {
     const s1 = stateWith([set("children_names", ["Tom", "Sue"])]);
-    const { state, conflicts } = applyUpdates(s1, [correct("has_children", false)]);
+    const { state, conflicts } = applyUpdates(s1, [correct("has_children", false)], USER_CORRECTS);
     expect(state.fields.children_names).toEqual(["Tom", "Sue"]);
     expect(conflicts[0].question).toMatch(/Tom and Sue/);
   });

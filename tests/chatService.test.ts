@@ -28,6 +28,28 @@ describe("handleChatTurn with scripted model outputs", () => {
     expect(second.state.fields.executor).toEqual({ name: "Sarah", relationship: "sister" });
   });
 
+  it("a model-flagged 'correction' is refused when the user's words don't support it", async () => {
+    const first = await handleChatTurn({ messages: say("..."), state: emptyState() }, live(VALID.multiField));
+    const second = await handleChatTurn({ messages: say("My sister Sarah is lovely"), state: first.state }, live(VALID.correction));
+    expect(second.state.fields.executor).toEqual({ name: "James", relationship: "brother" });
+    expect(second.reply).toMatch(/Which is correct\?/);
+  });
+
+  it("answering the app's own conflict question counts as a correction", async () => {
+    const first = await handleChatTurn({ messages: say("..."), state: emptyState() }, live(VALID.multiField));
+    const second = await handleChatTurn(
+      {
+        messages: [
+          { role: "assistant", content: `Earlier you told me your executor's name is "James", but now it sounds like your executor's name is "Sarah". Which is correct?` },
+          { role: "user", content: "Sarah, my sister" },
+        ],
+        state: first.state,
+      },
+      live(VALID.correction),
+    );
+    expect(second.state.fields.executor).toEqual({ name: "Sarah", relationship: "sister" });
+  });
+
   it("an ambiguous answer is held as unconfirmed and triggers a follow-up, not a guess", async () => {
     const res = await handleChatTurn({ messages: say("Maybe James? Or my sister"), state: emptyState() }, live(AMBIGUOUS.hedgedExecutor));
     expect(res.state.fields.executor.name).toBeNull();

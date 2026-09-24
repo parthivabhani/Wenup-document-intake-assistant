@@ -1,6 +1,7 @@
 import { runTurn, type LLMMode, type LLMProvider } from "./llm";
 import { FIELD_LABELS, type ChatRequest, type ChatResponse } from "./schema";
 import { FIELD_QUESTIONS, nextQuestion } from "./questions";
+import { userSignalledCorrection } from "./corrections";
 import { applyUpdates } from "./stateManager";
 
 /**
@@ -29,7 +30,9 @@ export async function handleChatTurn(
     };
   }
 
-  const { state: newState, applied, rejected, conflicts } = applyUpdates(state, result.output.updates);
+  const { state: newState, applied, rejected, conflicts } = applyUpdates(state, result.output.updates, {
+    userSignalledCorrection: userSignalledCorrection(messages),
+  });
 
   let reply = result.output.reply;
   if (conflicts.length > 0) {
