@@ -1,29 +1,13 @@
 "use client";
 
 import { Fragment } from "react";
-import { PLACEHOLDER, documentToText, generateDocument } from "@/lib/documentGen";
+import { PLACEHOLDER, generateDocument } from "@/lib/documentGen";
 import type { IntakeState } from "@/lib/schema";
+import { downloadPdf, downloadTxt } from "./downloads";
 
 export function DocumentPreview({ state }: { state: IntakeState }) {
   // Same pure function the server would use: the preview can't drift from the state.
   const doc = generateDocument(state);
-
-  function saveBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement("a"), { href: url, download: filename });
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadTxt() {
-    saveBlob(new Blob([documentToText(doc)], { type: "text/plain;charset=utf-8" }), "personal-wishes-draft.txt");
-  }
-
-  async function downloadPdf() {
-    // Loaded on demand so the PDF library isn't in the initial bundle.
-    const { documentToPdf } = await import("@/lib/documentPdf");
-    saveBlob(documentToPdf(doc).output("blob"), "personal-wishes-draft.pdf");
-  }
 
   return (
     <div className="space-y-4">
@@ -34,10 +18,10 @@ export function DocumentPreview({ state }: { state: IntakeState }) {
           {doc.isDraftComplete ? "✓ Draft complete" : "Draft in progress: gaps are highlighted"}
         </span>
         <div className="flex gap-2">
-          <button onClick={downloadPdf} className="btn btn-violet btn-sm">
+          <button onClick={() => downloadPdf(state)} className="btn btn-violet btn-sm">
             Download PDF
           </button>
-          <button onClick={downloadTxt} className="btn btn-outline btn-sm">
+          <button onClick={() => downloadTxt(state)} className="btn btn-outline btn-sm">
             .txt
           </button>
         </div>

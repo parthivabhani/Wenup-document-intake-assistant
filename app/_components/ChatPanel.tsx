@@ -15,9 +15,13 @@ type Props = {
   error: string | null;
   onSend: (text: string) => void;
   onRetry: () => void;
+  /** All details collected and confirmed: show the "draft ready" prompt. */
+  draftReady: boolean;
+  onViewDraft: () => void;
+  onDownloadPdf: () => void;
 };
 
-export function ChatPanel({ messages, pending, error, onSend, onRetry }: Props) {
+export function ChatPanel({ messages, pending, error, onSend, onRetry, draftReady, onViewDraft, onDownloadPdf }: Props) {
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -25,7 +29,7 @@ export function ChatPanel({ messages, pending, error, onSend, onRetry }: Props) 
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, pending, error]);
+  }, [messages, pending, error, draftReady]);
 
   useEffect(() => {
     if (!pending) inputRef.current?.focus();
@@ -79,6 +83,23 @@ export function ChatPanel({ messages, pending, error, onSend, onRetry }: Props) 
               {[0, 1, 2].map((i) => (
                 <span key={i} className="typing-dot h-2 w-2 rounded-full bg-ink" />
               ))}
+            </div>
+          </div>
+        )}
+
+        {draftReady && !pending && (
+          <div className="rise ml-9 rounded-3xl border-2 border-ink bg-lime p-5 shadow-[4px_4px_0_var(--color-ink)]" role="status">
+            <p className="font-display text-lg font-black">Your draft is ready</p>
+            <p className="mt-1 text-sm">
+              Review it, then download it as a PDF. You can still change anything by telling me here.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button onClick={onViewDraft} className="btn btn-sm bg-ink text-white hover:bg-violet">
+                View draft
+              </button>
+              <button onClick={onDownloadPdf} className="btn btn-outline btn-sm">
+                Download PDF
+              </button>
             </div>
           </div>
         )}

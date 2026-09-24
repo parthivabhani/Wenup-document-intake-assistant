@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ChatResponseSchema,
   IntakeStateSchema,
@@ -33,7 +33,10 @@ export function useIntakeChat() {
   const [lastTurn, setLastTurn] = useState<TurnInfo | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const restored = useRef(false);
+  // State, not a ref: the save effect must only run after the restored values have
+  // actually been rendered. With a ref, the first save ran in the same effect pass
+  // as the restore and overwrote storage with the empty initial state.
+  const [hydrated, setHydrated] = useState(false);
 
   // Restore after mount (sessionStorage isn't available during server render).
   useEffect(() => {
@@ -47,17 +50,17 @@ export function useIntakeChat() {
     } catch {
       /* storage unavailable: start fresh */
     }
-    restored.current = true;
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (!restored.current) return;
+    if (!hydrated) return;
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, state }));
     } catch {
       /* ignore */
     }
-  }, [messages, state]);
+  }, [hydrated, messages, state]);
 
   const send = useCallback(
     async (text: string, history: ChatMessage[] = messages) => {

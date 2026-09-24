@@ -13,16 +13,16 @@ const GROUPS: { title: string; fields: FieldKey[] }[] = [
   { title: "Wishes", fields: ["specific_gifts", "additional_wishes"] },
 ];
 
-type Props = { state: IntakeState; lastTurn: TurnInfo | null; turnKey: number };
+type Props = { state: IntakeState; lastTurn: TurnInfo | null; turnKey: number; onViewDraft: () => void };
 
-export function StatePanel({ state, lastTurn, turnKey }: Props) {
+export function StatePanel({ state, lastTurn, turnKey, onViewDraft }: Props) {
   const [showJson, setShowJson] = useState(false);
   const changed = new Set(lastTurn?.applied.filter((u) => u.status === "confirmed").map((u) => u.field));
   const done = FIELD_KEYS.length - missingFields(state).length;
 
   return (
     <div className="space-y-5">
-      <Progress done={done} total={FIELD_KEYS.length} pending={state.unconfirmed.length} />
+      <Progress done={done} total={FIELD_KEYS.length} pending={state.unconfirmed.length} onViewDraft={onViewDraft} />
 
       {GROUPS.map((group) => (
         <section key={group.title}>
@@ -55,7 +55,17 @@ export function StatePanel({ state, lastTurn, turnKey }: Props) {
   );
 }
 
-function Progress({ done, total, pending }: { done: number; total: number; pending: number }) {
+function Progress({
+  done,
+  total,
+  pending,
+  onViewDraft,
+}: {
+  done: number;
+  total: number;
+  pending: number;
+  onViewDraft: () => void;
+}) {
   const complete = done === total && pending === 0;
   return (
     <div className={`rounded-3xl p-5 ${complete ? "bg-lime" : "bg-ink text-cream"}`}>
@@ -85,6 +95,11 @@ function Progress({ done, total, pending }: { done: number; total: number; pendi
           style={{ width: `${(done / total) * 100}%` }}
         />
       </div>
+      {complete && (
+        <button onClick={onViewDraft} className="btn btn-sm mt-4 bg-ink text-white hover:bg-violet">
+          View &amp; download your draft →
+        </button>
+      )}
     </div>
   );
 }

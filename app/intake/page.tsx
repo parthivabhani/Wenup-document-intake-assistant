@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { FIELD_KEYS } from "@/lib/schema";
-import { missingFields } from "@/lib/stateManager";
+import { isComplete, missingFields } from "@/lib/stateManager";
 import { ChatPanel } from "../_components/ChatPanel";
 import { DocumentPreview } from "../_components/DocumentPreview";
 import { SiteHeader } from "../_components/SiteHeader";
 import { StatePanel } from "../_components/StatePanel";
+import { downloadPdf } from "../_components/downloads";
 import { useIntakeChat } from "../_hooks/useIntakeChat";
 
 type View = "chat" | "info" | "document";
@@ -26,12 +27,21 @@ export default function IntakePage() {
   }, []);
 
   const done = FIELD_KEYS.length - missingFields(chat.state).length;
+  const draftReady = isComplete(chat.state);
+
+  /** Opens the draft in whichever layout is showing (desktop tab or mobile view). */
+  function viewDraft() {
+    setPanel("document");
+    setView("document");
+  }
 
   function startOver() {
     if (window.confirm("Start over? This clears the conversation and all collected information.")) chat.reset();
   }
 
-  const infoView = <StatePanel state={chat.state} lastTurn={chat.lastTurn} turnKey={chat.messages.length} />;
+  const infoView = (
+    <StatePanel state={chat.state} lastTurn={chat.lastTurn} turnKey={chat.messages.length} onViewDraft={viewDraft} />
+  );
   const documentView = <DocumentPreview state={chat.state} />;
 
   return (
@@ -71,9 +81,12 @@ export default function IntakePage() {
             key={key}
             onClick={() => setView(key)}
             aria-current={view === key}
-            className={`rounded-full py-2 ${view === key ? "bg-ink text-white" : "text-ink/60"}`}
+            className={`relative rounded-full py-2 ${view === key ? "bg-ink text-white" : "text-ink/60"}`}
           >
             {label}
+            {key === "document" && draftReady && (
+              <span className="absolute top-1.5 right-3 h-2.5 w-2.5 rounded-full border border-ink bg-lime" aria-label="ready" />
+            )}
           </button>
         ))}
       </nav>
@@ -87,6 +100,9 @@ export default function IntakePage() {
               error={chat.error}
               onSend={chat.send}
               onRetry={chat.retry}
+              draftReady={draftReady}
+              onViewDraft={viewDraft}
+              onDownloadPdf={() => downloadPdf(chat.state)}
             />
           </div>
         </div>
@@ -111,9 +127,14 @@ export default function IntakePage() {
                   role="tab"
                   aria-selected={panel === key}
                   onClick={() => setPanel(key)}
-                  className={`rounded-full px-5 py-2 text-sm font-bold transition ${panel === key ? "bg-ink text-white" : "text-ink/60 hover:text-ink"}`}
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition ${panel === key ? "bg-ink text-white" : "text-ink/60 hover:text-ink"}`}
                 >
                   {label}
+                  {key === "document" && draftReady && (
+                    <span className="rounded-full bg-lime px-2 py-0.5 text-[10px] font-extrabold tracking-wide text-ink uppercase">
+                      Ready
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

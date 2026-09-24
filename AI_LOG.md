@@ -138,7 +138,13 @@ One detail caught while testing: the "Under the hood" grid lines are the list's 
 
 Went through the brief line by line against the code and test results. Everything was covered, but one item deserved a real check: *"graceful handling of … missing configuration"*. "No key" was covered (demo mode); a **wrong key** (e.g. a typo pasted into Vercel) wasn't exercised. Tested it against the real APIs: no crash, 4 attempts across 3 providers, errors logged, but the user was told *"Could you try saying it another way?"*. That blames the user for a server problem, and rephrasing can never help. `runTurn` now reports **why** it failed (`unavailable` vs `invalid_output`), and when no model is reachable the user is told the assistant is temporarily unavailable instead. Added tests for both. Also fixed three stale doc references left over from renames.
 
-## 13. Evidence
+## 13. Making the draft hard to miss, and a restore bug found on the way
+
+I wanted users not to miss the Draft document tab and its download button. Added prompts that appear only once the draft is complete (not nagging mid-interview): a "Your draft is ready" card in the chat with View draft / Download PDF, a **Ready** badge on the tab (a dot on mobile), and a button on the completed progress card. I decided against auto-switching tabs, because jumping away from the chat is disorienting.
+
+Testing it by loading a finished session into storage exposed a real bug: **refresh-restore didn't work reliably.** The restore and save effects ran in the same pass, so the first save wrote the *empty* initial state over the saved session before the restored values rendered. React's dev-mode double effects made it fail every time; in production it only worked by timing luck. Fixed by gating saves on a `hydrated` state flag rather than a ref.
+
+## 14. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.
