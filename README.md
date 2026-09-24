@@ -25,7 +25,7 @@ npm run dev                  # http://localhost:3000
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server on :3000 |
-| `npm test` | 81 unit/integration tests. No network, no key needed |
+| `npm test` | 83 unit/integration tests. No network, no key needed |
 | `npm run test:live` | Behavioural evals against the real model (needs `GROQ_API_KEY`). Writes [`tests/live/transcript.md`](tests/live/transcript.md) |
 | `npm run typecheck` / `npm run lint` | Static checks |
 | `npm run build && npm start` | Production build |
@@ -35,8 +35,9 @@ npm run dev                  # http://localhost:3000
 | Variable | Required | Purpose |
 |---|---|---|
 | `GROQ_API_KEY` | No (demo mode without it) | Primary provider |
+| `GEMINI_API_KEY` | No | Fallback on different infrastructure (Google) |
 | `CEREBRAS_API_KEY` | No | Extra fallback provider |
-| `GROQ_MODEL`, `GROQ_FALLBACK_MODEL`, `CEREBRAS_MODEL` | No | Override default models |
+| `GROQ_MODEL`, `GROQ_FALLBACK_MODEL`, `CEREBRAS_MODEL`, `GEMINI_MODEL` | No | Override default models |
 | `LLM_PROVIDER=mock` | No | Force demo mode even with keys set |
 
 Secrets live only in `.env.local`, which is git-ignored. `.env.example` documents them. `GET /api/status` reports which providers are active by name, never by key.
@@ -47,10 +48,17 @@ Deployed on Vercel as a single Next.js app: the UI is static and `/api/chat` run
 
 ---
 
+## Is there a backend? A database?
+
+**Backend: yes.** `app/api/chat/route.ts` is a server endpoint. It holds the API keys, calls the LLM and validates everything, and the browser never sees a key. On Vercel it runs as a serverless function.
+
+**Database: no, on purpose.** The brief puts persistence out of scope, and storing names, addresses and family details would mean auth, retention rules and GDPR obligations for a demo. The server is stateless: the browser keeps the session (`sessionStorage`, so a refresh doesn't lose it) and sends the state with each turn, and the server re-validates it. Server-side sessions are the first item under production improvements below.
+
 ## Architecture
 
 ```
-Browser (app/page.tsx + _components)          holds conversation + last server-confirmed state
+app/page.tsx                                   landing page (static): what it does + how it's engineered
+Browser (app/intake/page.tsx + _components)   holds conversation + last server-confirmed state
    │  POST /api/chat { messages, state }       renders preview with the same pure documentGen
    ▼
 app/api/chat/route.ts                          HTTP only: rate limit, Zod-validate body, 400/429/500
@@ -58,7 +66,7 @@ app/api/chat/route.ts                          HTTP only: rate limit, Zod-valida
 lib/chatService.ts                             one turn: ask LLM → apply updates → choose reply
    ├── lib/llm/            LLM interaction      prompt, provider chain, JSON validation, retry
    │     ├── provider.ts        LLMProvider interface (the only boundary to any model)
-   │     ├── openaiCompatible.ts  Groq / Cerebras / any OpenAI-compatible API
+   │     ├── openaiCompatible.ts  Groq / Gemini / Cerebras / any OpenAI-compatible API
    │     ├── mockProvider.ts      deterministic stand-in (demo mode + tests)
    │     └── prompt.ts            system prompt built from current state each turn
    ├── lib/stateManager.ts  the ONLY code that changes state: validate, guard, merge, derive
@@ -69,7 +77,7 @@ lib/schema.ts                                   Zod: single source of truth for 
 
 | Concern | Where | Notes |
 |---|---|---|
-| UI | `app/page.tsx`, `app/_components/*`, `app/_hooks/useIntakeChat.ts` | Never edits state itself; renders what the server returns (and re-validates it) |
+| UI | `app/page.tsx` (landing), `app/intake/page.tsx` (the app), `app/_components/*`, `app/_hooks/useIntakeChat.ts` | Never edits state itself; renders what the server returns (and re-validates it) |
 | Application logic | `lib/chatService.ts`, `lib/stateManager.ts`, `lib/corrections.ts`, `lib/questions.ts` | Pure/injectable, fully unit-tested |
 | LLM interaction | `lib/llm/*` | Nothing outside this folder knows a model exists |
 | Document generation | `lib/documentGen.ts` | Pure function, deterministic |
@@ -171,8 +179,11 @@ The failure modes are deliberately lopsided. If the regex misses a genuine corre
 1. `groq:openai/gpt-oss-120b`: primary
 2. `cerebras:gpt-oss-120b`: same model on a different provider (optional key)
 3. `groq:qwen/qwen3.8-27b`: different model with its own rate-limit budget
-4. `groq:openai/gpt-oss-20b`: last resort
-5. then the deterministic fallback question
+4. `gemini:gemini-3.6-flash`: different company's infrastructure, so it covers a full Groq outage. It's placed late because on the free tier it answered in 7–15s and returned 503 on 5 of 8 test calls
+5. `groq:openai/gpt-oss-20b`: last resort
+6. then the deterministic fallback question
+
+A turn stops starting new attempts after 40s (`TURN_DEADLINE_MS`), so a chain of slow providers can't exceed the 60s serverless function limit.
 
 Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is about 1.5k tokens. My first live eval run exhausted the primary model in 4 requests and quietly fell through to the weakest model, which then produced visibly worse behaviour. Each model on Groq has its own budget, so the chain adds capacity as well as redundancy. `meta.provider` and the "Last turn" panel in the UI show which model answered.
 
@@ -180,7 +191,7 @@ Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is abo
 
 ## Testing
 
-`npm test` runs 81 tests in about 1 second, with no network:
+`npm test` runs 83 tests in about 1 second, with no network:
 
 - **`stateManager.test.ts`**: valid/partial updates, corrections, per-field type rejection (a bad field doesn't sink the turn), unconfirmed values, derived facts, contradictions, the overwrite guard, completeness
 - **`llm.test.ts`**: schema validation of raw output against fixtures (not JSON, truncated, missing reply, unknown field, bad enum), repair retry, give-up after two bad outputs, provider fall-through, never-throws, prompt contains state, history trimming, env config

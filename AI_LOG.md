@@ -82,7 +82,24 @@ I accepted a regex here knowingly. It's crude, but its failure mode is safe: a m
 - The preview server tool hung on "starting", so the dev server was run directly and tested with curl before browser testing.
 - Before the first push: checked the remote was empty and scanned all commits for key patterns (`gsk_`, `csk-`) to make sure no secret was ever committed.
 
-## 7. Evidence
+## 7. Adding Gemini as a backup: measure first
+
+I added a Google Gemini key. Before wiring it in, Claude evaluated it on the same tricky scenarios:
+- `gemini-2.5-flash` and similar returned **404 "no longer available to new users"**; `gemini-3.6-flash` works with strict JSON schemas.
+- Quality when it answered was good (4 fields from one message; ignored a prompt-injection attempt).
+- But on the free tier **5 of 8 calls failed** (503 "high demand" or a 20s timeout), and successful ones took 7–15s against about 1s on Groq.
+
+Decision: add it, but **after** the Groq models, not second. Its value is *provider diversity*: a full Groq outage takes all three Groq models down together. Because several slow timeouts in a row could now exceed Vercel's 60s function limit, I also added a 40s per-turn deadline to `runTurn`, with a test.
+
+## 8. UI redesign
+
+I shared screenshots of wenup.co.uk and asked for a more polished UI and a landing page. Decisions:
+- **Landing page: yes, but light.** Reviewers arrive cold; one screen explains what it does and *how it's engineered* ("The AI suggests. The rules decide."), then one click into `/intake`. No marketing fluff.
+- Borrowed the visual language (violet hero block, heavy headlines, square lime buttons, highlighter marks, pastel cards) with original copy, and kept "Not an official WenUp product" visible.
+- Caught in review: the first draft of the hero said *"Nothing stored on a server"*. That isn't true (messages go to the LLM provider), so it was changed to "No sign-up needed". The hero illustration also showed a "Surname" field that doesn't exist in the schema; it was replaced with real fields.
+- Bug found in the mobile check: the "How it works" button appeared on phones despite `hidden`. Cause: custom `.btn` CSS was unlayered, and in Tailwind v4 unlayered CSS beats utility classes. Moved it into `@layer components`.
+
+## 9. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

@@ -1,17 +1,21 @@
 @import "tailwindcss";
 
-/* Palette taken from the WenUp technical test brief. */
+/* Palette and visual language inspired by wenup.co.uk and the test brief. */
 @theme {
   --color-ink: #240067;
   --color-violet: #4f1fbf;
+  --color-violet-deep: #3a119a;
   --color-lilac: #c9b3ff;
-  --color-lilac-soft: #ece4ff;
+  --color-lilac-soft: #e6dcff;
+  --color-lilac-pale: #f3eeff;
   --color-lime: #ebff57;
   --color-mint: #88f76a;
-  --color-cream: #fdf5ef;
-  --color-amber: #b45309;
-  --color-amber-soft: #fef3c7;
-  --font-sans: var(--font-open-sans), system-ui, sans-serif;
+  --color-cream: #fdf6f0;
+  --color-amber: #9a4a06;
+  --color-amber-soft: #fff1c9;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), system-ui, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -24,9 +28,47 @@ body {
   color: var(--color-ink);
 }
 
+/* In the components layer so Tailwind utilities (hidden, sm:inline-flex...) can override them. */
+@layer components {
+  /* Highlighter marks behind key words, as on wenup.co.uk */
+  .mark-lime,
+  .mark-lilac {
+    padding: 0 0.12em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .mark-lime { background: var(--color-lime); }
+  .mark-lilac { background: var(--color-lilac); }
+
+  /* Square, chunky buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    padding: 0.95rem 1.6rem;
+    border: 2px solid transparent;
+    transition: transform 120ms ease, background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:focus-visible { outline: 3px solid var(--color-lilac); outline-offset: 3px; }
+  .btn-lime { background: var(--color-lime); color: var(--color-ink); }
+  .btn-lime:hover { box-shadow: 4px 4px 0 var(--color-ink); }
+  .btn-violet { background: var(--color-violet); color: #fff; }
+  .btn-violet:hover { background: var(--color-ink); }
+  .btn-outline { background: #fff; color: var(--color-violet); border-color: var(--color-lilac); }
+  .btn-outline:hover { border-color: var(--color-violet); }
+  .btn-sm { padding: 0.55rem 1rem; font-size: 0.875rem; }
+}
+
 @keyframes typing {
   0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-  40% { opacity: 1; transform: translateY(-2px); }
+  40% { opacity: 1; transform: translateY(-3px); }
 }
 .typing-dot { animation: typing 1.2s infinite ease-in-out; }
 .typing-dot:nth-child(2) { animation-delay: 0.15s; }
@@ -36,4 +78,15 @@ body {
   from { background-color: var(--color-lime); }
   to { background-color: transparent; }
 }
-.flash { animation: flash 1.6s ease-out; }
+.flash { animation: flash 1.8s ease-out; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 260ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot, .flash, .rise { animation: none; }
+  .btn:hover { transform: none; }
+}
