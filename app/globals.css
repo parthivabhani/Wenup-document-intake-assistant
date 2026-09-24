@@ -66,6 +66,37 @@ body {
   .btn-sm { padding: 0.55rem 1rem; font-size: 0.875rem; }
 }
 
+/* ---- Scroll reveal (landing page). Only active once ScrollReveal has run. ---- */
+[data-reveal] {
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal-ready [data-reveal]:not(.is-visible) {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+/* Highlighter marks that sweep in behind the words when their heading appears */
+.mark-sweep {
+  background-color: transparent;
+  background-image: linear-gradient(var(--mark-color), var(--mark-color));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transition: background-size 800ms cubic-bezier(0.65, 0, 0.35, 1) 350ms;
+}
+.mark-sweep.mark-lime { --mark-color: var(--color-lime); }
+.mark-sweep.mark-lilac { --mark-color: var(--color-lilac); }
+.reveal-ready [data-reveal]:not(.is-visible) .mark-sweep { background-size: 0% 100%; }
+
+/* Gentle one-time entrance for the hero illustration */
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(14px) rotate(0.5deg); }
+  to { opacity: 1; transform: translateY(0) rotate(0); }
+}
+.float-in { animation: float-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both; }
+
 @keyframes typing {
   0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
   40% { opacity: 1; transform: translateY(-3px); }
@@ -87,6 +118,7 @@ body {
 .rise { animation: rise 260ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .typing-dot, .flash, .rise { animation: none; }
+  .typing-dot, .flash, .rise, .float-in { animation: none; }
+  [data-reveal], .mark-sweep { transition: none; }
   .btn:hover { transform: none; }
 }

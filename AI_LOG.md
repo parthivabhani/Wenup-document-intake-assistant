@@ -128,7 +128,13 @@ Re-reading every live reply after that change surfaced another problem: the prom
 
 Also: on phones the header showed only the logo, because I had hidden the product name below the `sm` breakpoint to save space. It now wraps to two short lines beside a slightly smaller logo, checked for overflow at 375px and 320px.
 
-## 11. Evidence
+## 11. Scroll animations
+
+Asked for scroll animations on the landing page, "not jumpy". Choices: sections fade up 18px **once** (never replay on scroll-up), cards and steps stagger by about 100ms, highlighter marks sweep in behind their words, and the hero doesn't animate on scroll so the first screen never flickers. It's progressive enhancement: content is only hidden after the script runs, so with JS disabled everything is visible, and it's all off under `prefers-reduced-motion`.
+
+One detail caught while testing: the "Under the hood" grid lines are the list's background showing through 1px gaps, so fading whole cells would flash pale boxes. The content inside each cell is animated instead. Testing was also misleading at first: the browser pane was hidden, so transitions and IntersectionObserver didn't run and everything looked broken. I had to make the page render before measuring.
+
+## 12. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

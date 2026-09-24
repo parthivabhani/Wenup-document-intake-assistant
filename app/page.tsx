@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
+import { ScrollReveal } from "./_components/ScrollReveal";
 import { SiteHeader } from "./_components/SiteHeader";
 
 const REPO = "https://github.com/parthivabhani/Wenup-document-intake-assistant";
@@ -6,6 +8,7 @@ const REPO = "https://github.com/parthivabhani/Wenup-document-intake-assistant";
 export default function Landing() {
   return (
     <div className="min-h-dvh">
+      <ScrollReveal />
       <SiteHeader
         actions={
           <>
@@ -78,7 +81,7 @@ function Hero() {
 /** A static illustration of the app: a chat exchange feeding the structured state. */
 function ProductPreview() {
   return (
-    <div className="relative w-full max-w-md">
+    <div className="float-in relative w-full max-w-md">
       <div className="space-y-3">
         <div className="max-w-[80%] rounded-3xl rounded-bl-md bg-white px-5 py-3.5 text-[15px] shadow-sm">
           Who would you like to appoint as your executor?
@@ -145,13 +148,18 @@ const PRINCIPLES = [
 function Principles() {
   return (
     <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-8 sm:pt-32">
-      <h2 className="max-w-4xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
-        Tell it in your own words. We&apos;ll keep the details <span className="mark-lime">straight.</span>
+      <h2 data-reveal className="max-w-4xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
+        Tell it in your own words. We&apos;ll keep the details <span className="mark-lime mark-sweep">straight.</span>
       </h2>
 
       <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {PRINCIPLES.map((p) => (
-          <article key={p.title} className={`flex flex-col rounded-[2rem] p-7 ${p.tone}`}>
+        {PRINCIPLES.map((p, i) => (
+          <article
+            key={p.title}
+            data-reveal
+            style={{ "--reveal-delay": `${i * 90}ms` } as CSSProperties}
+            className={`flex flex-col rounded-[2rem] p-7 ${p.tone}`}
+          >
             <Icon name={p.icon} />
             <h3 className="mt-8 font-display text-2xl leading-tight font-extrabold">{p.title}</h3>
             <p className="mt-3 text-[15px] leading-relaxed">{p.body}</p>
@@ -191,22 +199,27 @@ function HowItWorks() {
   return (
     <section id="how" className="mt-24 scroll-mt-8 bg-ink py-20 text-cream sm:mt-32 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-8">
-        <p className="font-display text-sm font-extrabold tracking-widest text-lime uppercase">Under the hood</p>
-        <h2 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
-          The AI suggests. <span className="mark-lilac text-ink">The rules decide.</span>
-        </h2>
+        <div data-reveal>
+          <p className="font-display text-sm font-extrabold tracking-widest text-lime uppercase">Under the hood</p>
+          <h2 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
+            The AI suggests. <span className="mark-lilac mark-sweep text-ink">The rules decide.</span>
+          </h2>
+        </div>
 
         <ol className="mt-14 grid gap-px overflow-hidden rounded-[2rem] bg-cream/15 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s) => (
+          {STEPS.map((s, i) => (
             <li key={s.n} className="bg-ink p-7 sm:p-8">
-              <span className="font-display text-5xl font-black text-lime">{s.n}</span>
-              <h3 className="mt-5 font-display text-xl font-extrabold">{s.title}</h3>
-              <p className="mt-3 text-[15px] leading-relaxed text-cream/80">{s.body}</p>
+              {/* Animate the content, not the cell: the grid lines are the list's background. */}
+              <div data-reveal style={{ "--reveal-delay": `${i * 110}ms` } as CSSProperties}>
+                <span className="font-display text-5xl font-black text-lime">{s.n}</span>
+                <h3 className="mt-5 font-display text-xl font-extrabold">{s.title}</h3>
+                <p className="mt-3 text-[15px] leading-relaxed text-cream/80">{s.body}</p>
+              </div>
             </li>
           ))}
         </ol>
 
-        <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-cream/80">
+        <div data-reveal className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-cream/80">
           <span>111 automated tests · 13 live model evals</span>
           <span>Automatic fallback across 5 models from 3 providers</span>
           <a href={REPO} className="font-bold text-lime underline-offset-4 hover:underline">
@@ -220,9 +233,9 @@ function HowItWorks() {
 
 function ClosingCta() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-8 sm:py-32">
+    <section data-reveal className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-8 sm:py-32">
       <h2 className="mx-auto max-w-3xl font-display text-4xl leading-[1.02] font-black tracking-tight sm:text-6xl">
-        Ready when <span className="mark-lilac">you are.</span>
+        Ready when <span className="mark-lilac mark-sweep">you are.</span>
       </h2>
       <p className="mx-auto mt-5 max-w-xl text-lg text-ink/80">
         Nine questions, one conversation, and a draft you can download as a PDF. It&apos;s a demonstration, so feel free to make
