@@ -47,7 +47,7 @@ function Hero() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-8">
       <div className="grid overflow-hidden rounded-[2.5rem] bg-violet lg:grid-cols-2">
-        <div className="px-7 py-12 sm:px-14 sm:py-20 lg:px-12 xl:px-14">
+        <div className="px-7 py-12 sm:px-14 sm:py-20 lg:px-12 lg:py-16 xl:px-14">
           <h1 className="font-display text-5xl leading-[0.95] font-black tracking-tight text-cream sm:text-7xl lg:text-[3.6rem] xl:text-7xl">
             Your wishes,
             <br />
@@ -70,9 +70,12 @@ function Hero() {
           <p className="mt-6 text-sm text-cream/70">About 5 minutes · No sign-up needed</p>
         </div>
 
-        {/* No bottom padding: the document sheet runs off the panel's bottom edge */}
-        <div className="relative hidden justify-center bg-lilac-soft px-10 pt-10 lg:flex" aria-hidden>
-          <ProductPreview />
+        {/* The left column sets the hero's height; the illustration fills the space and the
+            document sheet is clipped at the bottom edge instead of stretching the hero. */}
+        <div className="relative hidden overflow-hidden bg-lilac-soft lg:block" aria-hidden>
+          <div className="absolute inset-x-10 top-12 bottom-0 flex justify-center xl:inset-x-14">
+            <ProductPreview />
+          </div>
         </div>
       </div>
     </section>
@@ -80,23 +83,13 @@ function Hero() {
 }
 
 /**
- * A static illustration of the app's whole flow, top to bottom:
- * progress → conversation → structured data → the draft document.
+ * A static illustration of the app's flow, top to bottom:
+ * conversation → structured data → the draft document.
  */
 function ProductPreview() {
   return (
-    <div className="float-in flex w-full max-w-md flex-col">
-      <div className="flex items-center gap-3 self-start rounded-2xl bg-ink px-4 py-3 text-cream shadow-sm">
-        <span className="font-display text-xs font-extrabold tracking-widest uppercase opacity-80">Collected</span>
-        <span className="font-display text-lg font-black tabular-nums">
-          4<span className="text-sm opacity-60">/9</span>
-        </span>
-        <span className="h-2 w-24 overflow-hidden rounded-full bg-cream/20">
-          <span className="block h-full w-[44%] rounded-full bg-lime" />
-        </span>
-      </div>
-
-      <div className="mt-6 space-y-3">
+    <div className="float-in flex h-full w-full max-w-md flex-col">
+      <div className="space-y-3">
         <div className="max-w-[80%] rounded-3xl rounded-bl-md bg-white px-5 py-3.5 text-[15px] shadow-sm">
           Who would you like to appoint as your executor?
         </div>
@@ -105,33 +98,28 @@ function ProductPreview() {
         </div>
       </div>
 
-      <div className="relative z-10 mt-6 rotate-[-1.5deg] rounded-3xl border-2 border-ink bg-white p-5 shadow-[6px_6px_0_var(--color-ink)]">
-        <p className="mb-3 font-display text-xs font-extrabold tracking-widest text-violet uppercase">Captured</p>
-        <dl className="space-y-2.5 text-sm">
+      <div className="relative z-10 mt-7 rounded-3xl border-2 border-ink bg-white px-6 py-5 shadow-[5px_5px_0_var(--color-ink)]">
+        <p className="absolute -top-3.5 right-5 rotate-[2deg] bg-lime px-2.5 py-1 font-display text-xs font-extrabold">
+          Only what you said.
+        </p>
+        <p className="mb-3.5 font-display text-xs font-extrabold tracking-widest text-violet uppercase">Captured</p>
+        <dl className="space-y-3 text-sm">
           <Row label="Executor's name" value="James" />
           <Row label="Relationship" value="brother" />
           <Row label="Home address" value="not yet provided" muted />
         </dl>
-        <p className="absolute -right-4 -bottom-4 rotate-[3deg] bg-lime px-3 py-1.5 font-display text-sm font-extrabold">
-          Only what you said.
-        </p>
       </div>
 
-      {/* The draft document, peeking up from the bottom of the panel */}
-      <div className="mt-auto translate-y-1 pt-10">
-        <div className="mx-3 rotate-[1deg] rounded-t-md bg-white px-7 pt-6 pb-10 shadow-[0_-6px_24px_-12px_#24006755]">
+      {/* The draft document, sliding up from the bottom edge */}
+      <div className="mt-auto shrink-0 pt-8">
+        <div className="mx-4 rounded-t-md bg-white px-7 pt-6 pb-16 shadow-[0_-6px_24px_-12px_#24006755]">
           <p className="border-2 border-ink bg-lime px-2.5 py-1.5 font-display text-[10px] font-extrabold tracking-wide">
             FICTIONAL DOCUMENT - NOT LEGAL ADVICE
           </p>
-          <p className="mt-4 border-b-2 border-ink pb-2 font-serif text-xl font-bold">Personal Wishes Document</p>
-          <p className="mt-4 font-display text-[10px] font-extrabold tracking-widest text-violet uppercase">3. Executor</p>
-          <p className="mt-1 font-serif text-[15px] leading-relaxed">
+          <p className="mt-4 border-b-2 border-ink pb-2 font-serif text-lg font-bold">Personal Wishes Document</p>
+          <p className="mt-3 font-serif text-[15px] leading-relaxed">
             I appoint <span className="bg-lime/60 px-0.5">James</span> (my brother) as the executor of my wishes.
           </p>
-          <div className="mt-4 space-y-2" aria-hidden>
-            <span className="block h-2 w-full rounded-full bg-lilac-soft" />
-            <span className="block h-2 w-4/5 rounded-full bg-lilac-soft" />
-          </div>
         </div>
       </div>
     </div>
