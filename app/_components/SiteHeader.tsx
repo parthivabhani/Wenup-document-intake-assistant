@@ -17,9 +17,19 @@ export function SiteHeader({ actions, compact = false }: { actions?: ReactNode; 
       <div
         className={`mx-auto flex max-w-7xl items-center gap-3 px-4 sm:px-8 ${compact ? "py-3" : "py-5 sm:py-6"}`}
       >
-        <Link href="/" className="flex items-center gap-3" aria-label="Document Intake Assistant home">
-          <Image src="/wenup-logo.svg" alt="WenUp" width={compact ? 96 : 128} height={compact ? 27 : 36} priority />
-          <span className={`hidden font-medium sm:inline ${compact ? "text-sm" : "text-base"}`}>
+        <Link href="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="Document Intake Assistant home">
+          <Image
+            src="/wenup-logo.svg"
+            alt="WenUp"
+            width={compact ? 96 : 128}
+            height={compact ? 27 : 36}
+            priority
+            className={`h-auto shrink-0 ${compact ? "w-[76px] sm:w-[96px]" : "w-[92px] sm:w-[128px]"}`}
+          />
+          {/* Wraps to two short lines on phones so it fits beside the action button */}
+          <span
+            className={`max-w-[6.75rem] border-l-2 border-lilac pl-2.5 text-xs leading-tight font-semibold sm:max-w-none sm:pl-3 sm:font-medium ${compact ? "sm:text-sm" : "sm:text-base"}`}
+          >
             Document Intake Assistant
           </span>
         </Link>

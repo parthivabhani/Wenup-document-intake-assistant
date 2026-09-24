@@ -203,7 +203,7 @@ Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is abo
 
 Fixtures: [`tests/fixtures/llmResponses.ts`](tests/fixtures/llmResponses.ts) contains valid, ambiguous, contradictory and malformed model outputs.
 
-**Live evals** (`npm run test:live`) run 12 behavioural scenarios against the real model: multi-field extraction, the brief's "My brother James." example, hedging, "not sure yet", explicit correction, contradiction (with and without prior history), "my mom" as executor, "idk" for gifts, no re-asking, "no kids", prompt injection. They're separate from `npm test` because they're slow, cost tokens and aren't deterministic. The latest output is committed in [`tests/live/transcript.md`](tests/live/transcript.md).
+**Live evals** (`npm run test:live`) run 13 behavioural scenarios against the real model: multi-field extraction, the brief's "My brother James." example, hedging, "not sure yet", explicit correction, contradiction (with and without prior history), "my mom" as executor, "idk" for gifts, greeting tone, no re-asking, "no kids", prompt injection. They're separate from `npm test` because they're slow, cost tokens and aren't deterministic. The latest output is committed in [`tests/live/transcript.md`](tests/live/transcript.md).
 
 ---
 

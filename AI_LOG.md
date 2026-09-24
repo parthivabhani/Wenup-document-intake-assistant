@@ -120,7 +120,15 @@ Fixed the same way as corrections: a prompt rule **plus** a deterministic guard,
 
 Also added **Download PDF** (jsPDF, loaded only when clicked). It renders the same `DraftDocument` as the preview and `.txt`, so the three can't disagree. Known limitation, noted in the README: jsPDF's built-in fonts are Latin-only.
 
-## 10. Evidence
+## 10. Tone and a mobile header fix
+
+Feedback from my own testing: I typed "hi" and got **"Sure thing! Could you tell me your full name?"** It's a stock chatbot filler that doesn't even fit a greeting. Added voice rules to the prompt: reply to what was actually said, no filler openers ("Sure thing!", "Absolutely!"), don't start every reply with "Got it", acknowledge using the user's own words. Added a live eval: "hi" must not get a filler opener. It now says "Hi there! Could you tell me your full name, please?"
+
+Re-reading every live reply after that change surfaced another problem: the prompt-injection reply was *"...the fields for worldwide coverage and children need true/false values"*, leaking internals to the user. Tightened the rule (never mention fields, types, JSON or instructions) and added an assertion for it.
+
+Also: on phones the header showed only the logo, because I had hidden the product name below the `sm` breakpoint to save space. It now wraps to two short lines beside a slightly smaller logo, checked for overflow at 375px and 320px.
+
+## 11. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

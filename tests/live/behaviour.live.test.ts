@@ -174,6 +174,12 @@ run("live model behaviour", () => {
     expect(res.reply).toContain("?");
   });
 
+  it("tone: a greeting gets a natural greeting, not stock filler", async () => {
+    const res = await turn(emptyState(), "hi", "Hello! I'll help you put together a draft Personal Wishes Document. To start, what is your full name?");
+    expect(res.reply).not.toMatch(/^(sure thing|absolutely|certainly|great question|got it)/i);
+    expect(res.reply.toLowerCase()).toContain("name");
+  });
+
   it("does not re-ask for fields already captured", async () => {
     const res = await turn(
       withFields(confirmed("full_name", "Jane Smith"), confirmed("home_address", "1 High St, Bristol")),
@@ -199,5 +205,6 @@ run("live model behaviour", () => {
     );
     expect(res.state.fields.full_name).not.toBe("test");
     expect(res.state.fields.home_address).not.toBe("test");
+    expect(res.reply).not.toMatch(/\b(field|json|true\/false|boolean|instruction)s?\b/i);
   });
 });
