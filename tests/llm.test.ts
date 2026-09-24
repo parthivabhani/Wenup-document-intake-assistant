@@ -64,6 +64,16 @@ describe("runTurn: retries and fallbacks", () => {
     if (!res.ok) expect(res.errors).toHaveLength(2);
   });
 
+  it("stops trying providers once the turn deadline has passed", async () => {
+    let clock = 0;
+    const slow = scriptedProvider("slow", [rateLimited("slow")]);
+    const next = scriptedProvider("next", [VALID.multiField]);
+    const p1 = { ...slow.provider, complete: async (r: Parameters<typeof slow.provider.complete>[0]) => { clock += 50_000; return slow.provider.complete(r); } };
+    const res = await runTurn(emptyState(), userSays("hi"), [p1, next.provider], { deadlineMs: 40_000, now: () => clock });
+    expect(res.ok).toBe(false);
+    expect(next.calls).toHaveLength(0);
+  });
+
   it("sends the current state in the prompt and trims old history", async () => {
     const { provider, calls } = scriptedProvider("p1", [VALID.noUpdates]);
     const state = { ...emptyState(), fields: { ...emptyState().fields, full_name: "Jane Smith" } };
@@ -92,14 +102,22 @@ describe("providersFromEnv: configuration", () => {
     const { mode, providers } = providersFromEnv({
       GROQ_API_KEY: "x",
       CEREBRAS_API_KEY: "y",
+      GEMINI_API_KEY: "z",
     } as unknown as NodeJS.ProcessEnv);
     expect(mode).toBe("live");
     expect(providers.map((p) => p.name)).toEqual([
       "groq:openai/gpt-oss-120b",
       "cerebras:gpt-oss-120b",
       "groq:qwen/qwen3.8-27b",
+      "gemini:gemini-3.6-flash",
       "groq:openai/gpt-oss-20b",
     ]);
+  });
+
+  it("works with only a Gemini key", () => {
+    const { mode, providers } = providersFromEnv({ GEMINI_API_KEY: "z" } as unknown as NodeJS.ProcessEnv);
+    expect(mode).toBe("live");
+    expect(providers.map((p) => p.name)).toEqual(["gemini:gemini-3.6-flash"]);
   });
 
   it("LLM_PROVIDER=mock forces the mock even with keys", () => {

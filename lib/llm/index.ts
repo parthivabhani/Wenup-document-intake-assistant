@@ -10,6 +10,9 @@ export { LLMProviderError, type LLMProvider } from "./provider";
 /** How many recent messages to send. Older facts live in the state, so the transcript can be trimmed. */
 export const HISTORY_LIMIT = 12;
 
+/** Stop starting new attempts after this long, so a chain of slow providers can't exceed the host's function limit. */
+export const TURN_DEADLINE_MS = 40_000;
+
 /** Generated once from the Zod schema, so the model contract and the validator can't drift apart. */
 const RESPONSE_SCHEMA = (() => {
   const schema: Record<string, unknown> = z.toJSONSchema(LLMTurnOutputSchema);
@@ -25,13 +28,16 @@ export type TurnResult =
  * One conversational turn. Tries each provider in order:
  *   - provider/network error (rate limit, auth, timeout, 5xx) -> next provider
  *   - malformed or invalid output -> one repair retry on the same provider, then give up
- * Never throws; the caller decides the user-facing fallback.
+ * Stops starting new attempts after `deadlineMs`. Never throws; the caller
+ * decides the user-facing fallback.
  */
 export async function runTurn(
   state: IntakeState,
   messages: ChatMessage[],
   providers: LLMProvider[],
+  { deadlineMs = TURN_DEADLINE_MS, now = Date.now }: { deadlineMs?: number; now?: () => number } = {},
 ): Promise<TurnResult> {
+  const startedAt = now();
   const system = buildSystemPrompt(state);
   const history = messages.slice(-HISTORY_LIMIT);
   const errors: string[] = [];
@@ -41,6 +47,10 @@ export async function runTurn(
     let conversation = history;
 
     for (let attempt = 1; attempt <= 2; attempt++) {
+      if (now() - startedAt > deadlineMs) {
+        errors.push(`turn deadline of ${deadlineMs}ms reached; skipping ${provider.name}`);
+        return { ok: false, attempts, errors };
+      }
       attempts++;
       let raw: string;
       try {
@@ -138,6 +148,23 @@ export function providersFromEnv(env: NodeJS.ProcessEnv = process.env): {
         apiKey: env.GROQ_API_KEY,
         model: env.GROQ_FALLBACK_MODEL || "qwen/qwen3.8-27b",
       }),
+    );
+  }
+  if (env.GEMINI_API_KEY) {
+    // A different company's infrastructure: covers a full Groq outage. Placed after the
+    // Groq models because on the free tier it's slower and often returns 503 (see AI_LOG.md).
+    providers.push(
+      createOpenAICompatibleProvider({
+        label: "gemini",
+        baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+        apiKey: env.GEMINI_API_KEY,
+        model: env.GEMINI_MODEL || "gemini-3.6-flash",
+        reasoningEffort: "low",
+      }),
+    );
+  }
+  if (env.GROQ_API_KEY) {
+    providers.push(
       createOpenAICompatibleProvider({
         label: "groq",
         baseURL: "https://api.groq.com/openai/v1",
