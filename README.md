@@ -245,5 +245,3 @@ The mock (`mockProvider.ts`) implements the same interface and returns the same 
 - Richer schema: structured addresses, gifts as `{ item, recipient }`, multiple executors, validation such as postcode format.
 - Embed a Unicode font in the PDF (jsPDF's built-in fonts are Latin-only, so e.g. Devanagari addresses wouldn't render); DOCX export; accessibility audit; i18n.
 - Legal review of the document template. This version is explicitly fictional.
-
----
