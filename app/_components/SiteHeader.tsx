@@ -10,7 +10,7 @@ export function SiteHeader({ actions, compact = false }: { actions?: ReactNode; 
         <p className="bg-ink px-4 py-2.5 text-center text-xs text-white sm:text-sm">
           <span className="sm:hidden">Technical test by Parthiv Abhani. Not an official Wenup product.</span>
           <span className="hidden sm:inline">
-            A technical test build by Parthiv Abhani, not an official Wenup product. Any document it drafts is fictional, not legal advice.
+            A technical test built by Parthiv Abhani, not an official Wenup product. Any document it drafts is fictional, not legal advice.
           </span>{" "}
           <Link href="/intake" className="font-bold text-lime underline-offset-4 hover:underline">
             Try it now
