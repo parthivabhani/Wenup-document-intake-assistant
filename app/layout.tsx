@@ -8,7 +8,7 @@ const interTight = Inter_Tight({ variable: "--font-inter-tight", subsets: ["lati
 export const metadata: Metadata = {
   title: "Document Intake Assistant",
   description:
-    "A conversational interview that builds a fictional Personal Wishes Document. WenUp engineering technical test by Parthiv Abhani.",
+    "A conversational interview that builds a fictional Personal Wishes Document. Wenup engineering technical test by Parthiv Abhani.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

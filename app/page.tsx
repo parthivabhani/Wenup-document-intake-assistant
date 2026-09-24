@@ -27,7 +27,7 @@ export default function Landing() {
       </main>
 
       <footer className="border-t border-lilac/60 px-4 py-8 text-center text-sm text-ink/70">
-        Built by Parthiv Abhani for the WenUp engineering technical test. Not an official WenUp product.
+        Built by Parthiv Abhani for the Wenup engineering technical test. Not an official Wenup product.
         <br />
         Any document produced is fictional and is not legal advice. ·{" "}
         <a href={REPO} className="font-semibold text-violet underline-offset-4 hover:underline">

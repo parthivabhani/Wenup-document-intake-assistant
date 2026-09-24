@@ -95,7 +95,7 @@ Decision: add it, but **after** the Groq models, not second. Its value is *provi
 
 I shared screenshots of wenup.co.uk and asked for a more polished UI and a landing page. Decisions:
 - **Landing page: yes, but light.** Reviewers arrive cold; one screen explains what it does and *how it's engineered* ("The AI suggests. The rules decide."), then one click into `/intake`. No marketing fluff.
-- Borrowed the visual language (violet hero block, heavy headlines, square lime buttons, highlighter marks, pastel cards) with original copy, and kept "Not an official WenUp product" visible.
+- Borrowed the visual language (violet hero block, heavy headlines, square lime buttons, highlighter marks, pastel cards) with original copy, and kept "Not an official Wenup product" visible.
 - Caught in review: the first draft of the hero said *"Nothing stored on a server"*. That isn't true (messages go to the LLM provider), so it was changed to "No sign-up needed". The hero illustration also showed a "Surname" field that doesn't exist in the schema; it was replaced with real fields.
 - Bug found in the mobile check: the "How it works" button appeared on phones despite `hidden`. Cause: custom `.btn` CSS was unlayered, and in Tailwind v4 unlayered CSS beats utility classes. Moved it into `@layer components`.
 

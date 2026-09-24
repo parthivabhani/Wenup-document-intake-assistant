@@ -20,7 +20,7 @@ export function SiteHeader({ actions, compact = false }: { actions?: ReactNode; 
         <Link href="/" className="flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="Document Intake Assistant home">
           <Image
             src="/wenup-logo.svg"
-            alt="WenUp"
+            alt="Wenup"
             width={compact ? 96 : 128}
             height={compact ? 27 : 36}
             priority

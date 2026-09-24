@@ -1,6 +1,6 @@
 # Document Intake Assistant
 
-A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the WenUp engineering technical test.
+A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
 **Live demo:** _LIVE_URL_ · **Repo:** https://github.com/parthivabhani/Wenup-document-intake-assistant
 

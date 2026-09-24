@@ -123,7 +123,7 @@ export default function IntakePage() {
       </main>
 
       <footer className="hidden px-4 pb-2 text-center text-[11px] text-ink/55 lg:-mt-2 lg:block">
-        Technical test by Parthiv Abhani for WenUp. Not an official WenUp product. The generated document is fictional and not legal advice.
+        Technical test by Parthiv Abhani for Wenup. Not an official Wenup product. The generated document is fictional and not legal advice.
       </footer>
     </div>
   );
