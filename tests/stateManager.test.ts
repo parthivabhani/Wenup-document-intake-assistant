@@ -6,7 +6,13 @@ const set = (field: FieldUpdate["field"], value: FieldUpdate["value"]): FieldUpd
   field,
   value,
   status: "confirmed",
+  is_correction: false,
   note: null,
+});
+
+const correct = (field: FieldUpdate["field"], value: FieldUpdate["value"]): FieldUpdate => ({
+  ...set(field, value),
+  is_correction: true,
 });
 
 function stateWith(updates: FieldUpdate[]): IntakeState {
@@ -45,10 +51,40 @@ describe("applyUpdates: valid and partial updates", () => {
 });
 
 describe("applyUpdates: corrections", () => {
-  it("a later answer overwrites an earlier one", () => {
+  it("an explicit correction overwrites the earlier answer", () => {
     const s1 = stateWith([set("executor.name", "James")]);
-    const { state } = applyUpdates(s1, [set("executor.name", "Sarah")]);
+    const { state, conflicts } = applyUpdates(s1, [correct("executor.name", "Sarah")]);
     expect(state.fields.executor.name).toBe("Sarah");
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("a different value WITHOUT the correction flag is a contradiction: kept old value, asks", () => {
+    const s1 = stateWith([set("executor.name", "James")]);
+    const { state, conflicts, rejected } = applyUpdates(s1, [set("executor.name", "Sarah")]);
+    expect(state.fields.executor.name).toBe("James");
+    expect(rejected.map((r) => r.kind)).toEqual(["conflict"]);
+    expect(conflicts[0].question).toBe(
+      `Earlier you told me your executor's name is "James", but now it sounds like your executor's name is "Sarah". Which is correct?`,
+    );
+  });
+
+  it("refining a value is not a contradiction (James -> James Smith)", () => {
+    const s1 = stateWith([set("executor.name", "James")]);
+    const { state, conflicts } = applyUpdates(s1, [set("executor.name", "James Smith")]);
+    expect(state.fields.executor.name).toBe("James Smith");
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("adding to a list is not a contradiction", () => {
+    const s1 = stateWith([set("children_names", ["Tom"])]);
+    const { state, conflicts } = applyUpdates(s1, [set("children_names", ["Tom", "Sue"])]);
+    expect(state.fields.children_names).toEqual(["Tom", "Sue"]);
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("repeating the same value is fine", () => {
+    const s1 = stateWith([set("has_children", true)]);
+    expect(applyUpdates(s1, [set("has_children", true)]).conflicts).toHaveLength(0);
   });
 
   it("null clears a field back to unknown", () => {
@@ -61,8 +97,8 @@ describe("applyUpdates: corrections", () => {
     const s1 = stateWith([set("has_children", false)]);
     expect(s1.fields.children_names).toEqual([]);
     const { state, conflicts } = applyUpdates(s1, [
-      set("has_children", true),
-      set("children_names", ["Tom", "Sue"]),
+      correct("has_children", true),
+      correct("children_names", ["Tom", "Sue"]),
     ]);
     expect(conflicts).toHaveLength(0);
     expect(state.fields.has_children).toBe(true);
@@ -71,7 +107,7 @@ describe("applyUpdates: corrections", () => {
 
   it("switching to 'has children' without names resets the list to unknown", () => {
     const s1 = stateWith([set("has_children", false)]);
-    const { state } = applyUpdates(s1, [set("has_children", true)]);
+    const { state } = applyUpdates(s1, [correct("has_children", true)]);
     expect(state.fields.children_names).toBeNull();
   });
 });
@@ -105,7 +141,7 @@ describe("applyUpdates: validation rejects bad values without crashing", () => {
 describe("applyUpdates: unconfirmed values", () => {
   it("holds an ambiguous value aside instead of applying it", () => {
     const { state } = applyUpdates(emptyState(), [
-      { field: "executor.name", value: "James", status: "unconfirmed", note: "User said 'maybe James'" },
+      { field: "executor.name", value: "James", status: "unconfirmed", is_correction: false, note: "User said 'maybe James'" },
     ]);
     expect(state.fields.executor.name).toBeNull();
     expect(state.unconfirmed).toEqual([
@@ -115,18 +151,20 @@ describe("applyUpdates: unconfirmed values", () => {
 
   it("confirming the field clears the pending entry", () => {
     const s1 = applyUpdates(emptyState(), [
-      { field: "executor.name", value: "James", status: "unconfirmed", note: "unsure" },
+      { field: "executor.name", value: "James", status: "unconfirmed", is_correction: false, note: "unsure" },
     ]).state;
     const { state } = applyUpdates(s1, [set("executor.name", "James")]);
     expect(state.fields.executor.name).toBe("James");
     expect(state.unconfirmed).toEqual([]);
   });
 
-  it("rejects an unconfirmed update with no value", () => {
-    const { rejected } = applyUpdates(emptyState(), [
-      { field: "full_name", value: null, status: "unconfirmed", note: null },
+  it("treats an unconfirmed update with no value as a harmless no-op", () => {
+    const s1 = stateWith([set("full_name", "Jane")]);
+    const { state, rejected } = applyUpdates(s1, [
+      { field: "full_name", value: null, status: "unconfirmed", is_correction: false, note: "unsure" },
     ]);
-    expect(rejected).toHaveLength(1);
+    expect(state).toEqual(s1);
+    expect(rejected.map((r) => r.kind)).toEqual(["ignored"]);
   });
 });
 
@@ -161,7 +199,27 @@ describe("applyUpdates: derived facts and contradictions", () => {
     const { state, conflicts } = applyUpdates(s1, [set("has_children", false)]);
     expect(state.fields.has_children).toBe(true);
     expect(state.fields.children_names).toEqual(["Tom", "Sue"]);
+    expect(conflicts).toHaveLength(1);
+  });
+
+  it("even a flagged correction can't leave state inconsistent (no children + names)", () => {
+    const s1 = stateWith([set("children_names", ["Tom", "Sue"])]);
+    const { state, conflicts } = applyUpdates(s1, [correct("has_children", false)]);
+    expect(state.fields.children_names).toEqual(["Tom", "Sue"]);
     expect(conflicts[0].question).toMatch(/Tom and Sue/);
+  });
+
+  it("model flips both children fields without a correction: blocked, ONE question naming the child", () => {
+    const s1 = stateWith([set("has_children", false)]);
+    const { state, conflicts } = applyUpdates(s1, [
+      set("has_children", true),
+      set("children_names", ["Tom"]),
+    ]);
+    expect(state.fields.has_children).toBe(false);
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0].question).toBe(
+      "Earlier you told me you don't have children, but now it sounds like you have a child named Tom. Which is correct?",
+    );
   });
 });
 
@@ -189,7 +247,7 @@ describe("progress", () => {
     ]);
     expect(isComplete(full)).toBe(true);
     const pending = applyUpdates(full, [
-      { field: "home_address", value: "2 Low Road", status: "unconfirmed", note: "moving?" },
+      { field: "home_address", value: "2 Low Road", status: "unconfirmed", is_correction: false, note: "moving?" },
     ]).state;
     expect(isComplete(pending)).toBe(false);
   });

@@ -118,6 +118,10 @@ export function emptyState(): IntakeState {
  * this / it is now unknown". `status: "unconfirmed"` means the user said
  * something relevant but ambiguous, so it's held aside and not applied.
  *
+ * `is_correction` is the model's declaration that the user explicitly changed
+ * an earlier answer. Without it, stateManager refuses to overwrite a known
+ * value and asks the user which version is right.
+ *
  * `value` is loosely typed here on purpose: the per-field type check happens in
  * stateManager, so one bad field is rejected without discarding the whole turn.
  */
@@ -125,6 +129,9 @@ export const FieldUpdateSchema = z.object({
   field: FieldKeySchema,
   value: z.union([z.string(), z.boolean(), z.array(z.string()), z.null()]),
   status: z.enum(["confirmed", "unconfirmed"]),
+  is_correction: z
+    .boolean()
+    .describe("True only if the user explicitly changed a previous answer."),
   note: z
     .string()
     .nullable()
@@ -168,6 +175,8 @@ export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 
 export const RejectedUpdateSchema = z.object({
   update: FieldUpdateSchema,
+  /** invalid = wrong type/shape; conflict = contradicts state; ignored = harmless no-op. */
+  kind: z.enum(["invalid", "conflict", "ignored"]),
   reason: z.string(),
 });
 export type RejectedUpdate = z.infer<typeof RejectedUpdateSchema>;

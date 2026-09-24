@@ -8,6 +8,7 @@ import {
   type IntakeState,
   type RejectedUpdate,
 } from "./schema";
+import { describeFieldValue, joinWithAnd } from "./format";
 
 /**
  * The only code allowed to change IntakeState. Every proposed update (from the
@@ -63,11 +64,12 @@ export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyR
   const rejected: RejectedUpdate[] = [];
 
   // 1. Validate each update's value against its field's schema.
-  const valid: { update: FieldUpdate; value: FieldValue | null }[] = [];
+  const valid: ValidUpdate[] = [];
   for (const update of updates) {
     if (update.value === null) {
       if (update.status === "unconfirmed") {
-        rejected.push({ update, reason: "An unconfirmed update must carry a value" });
+        // "Unsure, and no candidate value": nothing to hold, nothing to change.
+        rejected.push({ update, kind: "ignored", reason: "Unconfirmed update with no value" });
       } else {
         valid.push({ update, value: null });
       }
@@ -77,6 +79,7 @@ export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyR
     if (!parsed.success) {
       rejected.push({
         update,
+        kind: "invalid",
         reason: `Invalid value for ${update.field}: ${parsed.error.issues[0]?.message ?? "wrong type"}`,
       });
       continue;
@@ -84,22 +87,31 @@ export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyR
     valid.push({ update, value: parsed.data as FieldValue });
   }
 
-  // 2. Merge, then check consistency. If this turn introduced a conflict, drop
-  //    this turn's updates to the conflicting fields and keep the old values.
-  let candidate = merge(state, valid);
-  const conflicts = findConflicts(candidate.fields);
+  // 2. Overwrite guard: a known value may only be replaced by something
+  //    different when the model flags it as an explicit correction by the user.
+  //    Otherwise it's a contradiction, and we ask instead of guessing which is right.
+  const overwrite = findOverwriteConflicts(state, valid);
+  for (const v of overwrite.blocked) {
+    rejected.push({ update: v.update, kind: "conflict", reason: "Changes a known value without an explicit correction" });
+  }
+  const unblocked = valid.filter((v) => !overwrite.blocked.includes(v));
 
-  if (conflicts.length > 0) {
-    const conflicted = new Set(conflicts.flatMap((c) => c.fields));
-    const [blocked, allowed] = partition(valid, (v) => conflicted.has(v.update.field));
+  // 3. Merge, then check cross-field consistency. If this turn introduced an
+  //    inconsistency, drop its updates to the conflicting fields.
+  let candidate = merge(state, unblocked);
+  const consistency = findConflicts(candidate.fields);
+
+  if (consistency.length > 0) {
+    const conflicted = new Set(consistency.flatMap((c) => c.fields));
+    const [blocked, allowed] = partition(unblocked, (v) => conflicted.has(v.update.field));
     for (const b of blocked) {
-      rejected.push({ update: b.update, reason: "Contradicts information already provided" });
+      rejected.push({ update: b.update, kind: "conflict", reason: "Contradicts information already provided" });
     }
     candidate = merge(state, allowed);
     // Only reachable if the incoming state was already inconsistent; refuse the turn entirely.
     if (findConflicts(candidate.fields).length > 0) {
       for (const a of allowed) {
-        rejected.push({ update: a.update, reason: "State is inconsistent; update not applied" });
+        rejected.push({ update: a.update, kind: "conflict", reason: "State is inconsistent; update not applied" });
       }
       candidate = state;
     }
@@ -110,14 +122,58 @@ export function applyUpdates(state: IntakeState, updates: FieldUpdate[]): ApplyR
     state: candidate,
     applied: updates.filter((u) => !rejectedSet.has(u)),
     rejected,
-    conflicts,
+    conflicts: [...overwrite.conflicts, ...consistency],
   };
 }
 
-function merge(
+type ValidUpdate = { update: FieldUpdate; value: FieldValue | null };
+
+function findOverwriteConflicts(
   state: IntakeState,
-  updates: { update: FieldUpdate; value: FieldValue | null }[],
-): IntakeState {
+  updates: ValidUpdate[],
+): { blocked: ValidUpdate[]; conflicts: Conflict[] } {
+  const blocked: ValidUpdate[] = [];
+  const conflicts: Conflict[] = [];
+
+  for (const v of updates) {
+    const { field, status, is_correction } = v.update;
+    const current = getField(state.fields, field);
+    if (status !== "confirmed" || is_correction || v.value === null || current === null) continue;
+    if (isCompatibleChange(current, v.value)) continue;
+    blocked.push(v);
+    conflicts.push({
+      fields: [field],
+      question: `Earlier you told me ${describeFieldValue(field, current)}, but now it sounds like ${describeFieldValue(field, v.value)}. Which is correct?`,
+    });
+  }
+
+  // "has children" and "children's names" describe the same fact: ask one question, the more specific one.
+  const names = conflicts.find((c) => c.fields[0] === "children_names");
+  const hasChildren = conflicts.find((c) => c.fields[0] === "has_children");
+  if (names && hasChildren) {
+    names.fields.push("has_children");
+    conflicts.splice(conflicts.indexOf(hasChildren), 1);
+  }
+  return { blocked, conflicts };
+}
+
+/**
+ * Changes that don't contradict the old value: identical, a refinement of a
+ * string ("James" -> "James Smith"), or adding to a non-empty list.
+ */
+function isCompatibleChange(current: FieldValue, next: FieldValue): boolean {
+  const norm = (s: string) => s.trim().toLowerCase();
+  if (typeof current === "string" && typeof next === "string") {
+    return norm(next).includes(norm(current));
+  }
+  if (Array.isArray(current) && Array.isArray(next)) {
+    if (current.length === 0) return next.length === 0;
+    return current.every((c) => next.some((n) => norm(n).includes(norm(c))));
+  }
+  return current === next;
+}
+
+function merge(state: IntakeState, updates: ValidUpdate[]): IntakeState {
   let fields = state.fields;
   let unconfirmed = state.unconfirmed;
 
@@ -131,7 +187,7 @@ function merge(
         { field: update.field, value, note: update.note ?? "Needs confirmation" },
       ];
     } else {
-      // A later confirmed answer simply overwrites: corrections need no special case.
+      // Overwrites reaching this point were already vetted by the guard in applyUpdates.
       fields = setField(fields, update.field, value);
     }
   }
@@ -165,7 +221,7 @@ export function findConflicts(fields: IntakeFields): Conflict[] {
   if (fields.has_children === false && names && names.length > 0) {
     conflicts.push({
       fields: ["has_children", "children_names"],
-      question: `I have a note that you don't have children, but you've also mentioned ${joinNames(names)}. Could you clarify whether you have children, and if so, their names?`,
+      question: `I have a note that you don't have children, but you've also mentioned ${joinWithAnd(names)}. Could you clarify whether you have children, and if so, their names?`,
     });
   }
   return conflicts;
@@ -191,9 +247,4 @@ function partition<T>(items: T[], pred: (item: T) => boolean): [T[], T[]] {
   const no: T[] = [];
   for (const item of items) (pred(item) ? yes : no).push(item);
   return [yes, no];
-}
-
-function joinNames(names: string[]): string {
-  if (names.length <= 1) return names.join("");
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }

@@ -1,4 +1,5 @@
 import { FIELD_LABELS, type FieldKey, type IntakeState } from "./schema";
+import { formatValue } from "./format";
 import { missingFields } from "./stateManager";
 
 /**
@@ -31,10 +32,4 @@ export function nextQuestion(state: IntakeState): string {
   }
   const [next] = missingFields(state);
   return next ? FIELD_QUESTIONS[next] : COMPLETE_MESSAGE;
-}
-
-function formatValue(value: string | boolean | string[]): string {
-  if (typeof value === "boolean") return value ? "yes" : "no";
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "none";
-  return value;
 }
