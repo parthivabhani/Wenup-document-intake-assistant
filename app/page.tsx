@@ -207,7 +207,7 @@ function HowItWorks() {
         </ol>
 
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-cream/80">
-          <span>83 automated tests · 10 live model evals</span>
+          <span>111 automated tests · 12 live model evals</span>
           <span>Automatic fallback across 5 models from 3 providers</span>
           <a href={REPO} className="font-bold text-lime underline-offset-4 hover:underline">
             Read the code and design notes →
@@ -225,7 +225,7 @@ function ClosingCta() {
         Ready when <span className="mark-lilac">you are.</span>
       </h2>
       <p className="mx-auto mt-5 max-w-xl text-lg text-ink/80">
-        Nine questions, one conversation, and a draft you can download. It&apos;s a demonstration, so feel free to make
+        Nine questions, one conversation, and a draft you can download as a PDF. It&apos;s a demonstration, so feel free to make
         things up.
       </p>
       <Link href="/intake" className="btn btn-lime mt-9">

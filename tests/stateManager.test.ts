@@ -136,6 +136,23 @@ describe("applyUpdates: validation rejects bad values without crashing", () => {
     expect(state).toEqual(emptyState());
   });
 
+  it.each(["mom", "My Mum", "my mother", "brother", "my best friend", "the solicitor"])(
+    "rejects the relationship word %j as the executor's name",
+    (word) => {
+      const { rejected } = applyUpdates(emptyState(), [set("executor.name", word)]);
+      expect(rejected.map((r) => r.kind)).toEqual(["invalid"]);
+    },
+  );
+
+  it.each(["James", "Momo Ali", "Sister Mary Joseph", "Brother Tuck"])("accepts the real name %j", (name) => {
+    expect(applyUpdates(emptyState(), [set("executor.name", name)]).rejected).toHaveLength(0);
+  });
+
+  it("rejects a relationship word inside the children's names", () => {
+    const { rejected } = applyUpdates(emptyState(), [set("children_names", ["Tom", "my daughter"])]);
+    expect(rejected).toHaveLength(1);
+  });
+
   it("keeps valid updates when one in the same turn is invalid", () => {
     const { state, applied, rejected } = applyUpdates(emptyState(), [
       set("full_name", "Jane Smith"),

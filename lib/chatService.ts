@@ -1,7 +1,7 @@
 import { runTurn, type LLMMode, type LLMProvider } from "./llm";
-import { FIELD_LABELS, type ChatRequest, type ChatResponse } from "./schema";
+import { FIELD_LABELS, type ChatRequest, type ChatResponse, type FieldUpdate, type IntakeState } from "./schema";
 import { FIELD_QUESTIONS, nextQuestion } from "./questions";
-import { userSignalledCorrection } from "./corrections";
+import { userExpressedUncertainty, userSignalledCorrection } from "./userSignals";
 import { applyUpdates } from "./stateManager";
 
 /**
@@ -30,16 +30,22 @@ export async function handleChatTurn(
     };
   }
 
-  const { state: newState, applied, rejected, conflicts } = applyUpdates(state, result.output.updates, {
+  const uncertain = userExpressedUncertainty(messages);
+  const { updates, heldNone } = holdUncertainNone(result.output.updates, uncertain);
+
+  const { state: newState, applied, rejected, conflicts } = applyUpdates(state, updates, {
     userSignalledCorrection: userSignalledCorrection(messages),
   });
 
   let reply = result.output.reply;
+  const invalid = rejected.find((r) => r.kind === "invalid");
   if (conflicts.length > 0) {
     reply = conflicts.map((c) => c.question).join(" ");
-  } else if (rejected.some((r) => r.kind === "invalid")) {
-    const field = rejected.find((r) => r.kind === "invalid")!.update.field;
-    reply = `I wasn't able to record your ${FIELD_LABELS[field].toLowerCase()} from that. ${FIELD_QUESTIONS[field]}`;
+  } else if (invalid) {
+    reply = followUpForInvalid(invalid.update.field, newState);
+  } else if (heldNone) {
+    const label = FIELD_LABELS[heldNone].toLowerCase();
+    reply = `That's fine, there's no rush. Should I record that you have no ${label}, or would you like to add some?`;
   }
 
   const notable = rejected.filter((r) => r.kind !== "ignored");
@@ -56,4 +62,31 @@ export async function handleChatTurn(
       attempts: result.attempts,
     },
   };
+}
+
+/**
+ * An explicit "none" ([]) proposed from a message where the user sounded unsure
+ * ("idk what to leave") is held as unconfirmed instead of applied.
+ */
+function holdUncertainNone(
+  updates: FieldUpdate[],
+  uncertain: boolean,
+): { updates: FieldUpdate[]; heldNone: FieldUpdate["field"] | null } {
+  if (!uncertain) return { updates, heldNone: null };
+  let heldNone: FieldUpdate["field"] | null = null;
+  const adjusted = updates.map((u) => {
+    if (u.status !== "confirmed" || !Array.isArray(u.value) || u.value.length > 0) return u;
+    heldNone ??= u.field;
+    return { ...u, status: "unconfirmed" as const, note: "You sounded unsure; confirm there are none" };
+  });
+  return { updates: adjusted, heldNone };
+}
+
+function followUpForInvalid(field: FieldUpdate["field"], state: IntakeState): string {
+  const relationship = state.fields.executor.relationship;
+  if (field === "executor.name" && relationship) {
+    return `Noted that your executor is your ${relationship}. What is their name?`;
+  }
+  if (field === "children_names") return "What are your children's names?";
+  return `I wasn't able to record your ${FIELD_LABELS[field].toLowerCase()} from that. ${FIELD_QUESTIONS[field]}`;
 }

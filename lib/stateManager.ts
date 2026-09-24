@@ -8,7 +8,7 @@ import {
   type IntakeState,
   type RejectedUpdate,
 } from "./schema";
-import { CONFLICT_QUESTION_MARKER } from "./corrections";
+import { CONFLICT_QUESTION_MARKER } from "./userSignals";
 import { describeFieldValue, joinWithAnd } from "./format";
 
 /**

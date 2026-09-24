@@ -25,7 +25,7 @@ npm run dev                  # http://localhost:3000
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server on :3000 |
-| `npm test` | 83 unit/integration tests. No network, no key needed |
+| `npm test` | 111 unit/integration tests. No network, no key needed |
 | `npm run test:live` | Behavioural evals against the real model (needs `GROQ_API_KEY`). Writes [`tests/live/transcript.md`](tests/live/transcript.md) |
 | `npm run typecheck` / `npm run lint` | Static checks |
 | `npm run build && npm start` | Production build |
@@ -70,17 +70,17 @@ lib/chatService.ts                             one turn: ask LLM → apply updat
    │     ├── mockProvider.ts      deterministic stand-in (demo mode + tests)
    │     └── prompt.ts            system prompt built from current state each turn
    ├── lib/stateManager.ts  the ONLY code that changes state: validate, guard, merge, derive
-   ├── lib/corrections.ts   deterministic "did the user actually correct something?" check
-   └── lib/documentGen.ts   pure: state → draft document (no LLM)
+   ├── lib/userSignals.ts   deterministic checks on the user's words: correction? uncertainty?
+   └── lib/documentGen.ts   pure: state → draft document (no LLM); documentPdf.ts renders it to PDF
 lib/schema.ts                                   Zod: single source of truth for every shape
 ```
 
 | Concern | Where | Notes |
 |---|---|---|
 | UI | `app/page.tsx` (landing), `app/intake/page.tsx` (the app), `app/_components/*`, `app/_hooks/useIntakeChat.ts` | Never edits state itself; renders what the server returns (and re-validates it) |
-| Application logic | `lib/chatService.ts`, `lib/stateManager.ts`, `lib/corrections.ts`, `lib/questions.ts` | Pure/injectable, fully unit-tested |
+| Application logic | `lib/chatService.ts`, `lib/stateManager.ts`, `lib/userSignals.ts`, `lib/questions.ts` | Pure/injectable, fully unit-tested |
 | LLM interaction | `lib/llm/*` | Nothing outside this folder knows a model exists |
-| Document generation | `lib/documentGen.ts` | Pure function, deterministic |
+| Document generation | `lib/documentGen.ts`, `lib/documentPdf.ts` | Pure function, deterministic; the preview, `.txt` and PDF all render the same `DraftDocument` |
 | Data model + API contract | `lib/schema.ts` | Zod schemas → TS types **and** the JSON Schema sent to the model |
 
 ### Structured state
@@ -150,7 +150,7 @@ This is enforced three times: (1) the JSON Schema is generated from the Zod sche
 | Multi-turn conversation | Client keeps the transcript; server sends the last 12 messages. Older context isn't needed because facts live in the state, which is sent in full every turn |
 | Explicit schema, not chat history, as source of truth | `IntakeState` in `lib/schema.ts`; the prompt is rebuilt from it every turn, including a code-computed list of missing fields |
 | Several fields in one answer | Model returns an array of updates. Live eval: one sentence → 4 fields |
-| Don't invent facts | Prompt rule plus live eval: "My brother James" → `name: "James"`, never "James Smith". Missing values stay `null` and show as _not yet provided_ in both preview and document |
+| Don't invent facts | Relationship words are rejected as names ("my mom" → relationship `mother`, name asked for); "idk" is never recorded as "none". Prompt rule plus live eval: "My brother James" → `name: "James"`, never "James Smith". Missing values stay `null` and show as _not yet provided_ in both preview and document |
 | Unknown / unconfirmed values explicit | `null` for unknown; hedged answers go to `unconfirmed[]` with a note, are shown with an "Unconfirmed" badge, and are never put into the document |
 | Unclear answers → follow-up | No update + a question. "I'm not sure yet" leaves the field `null` |
 | Contradictions → follow-up | Two layers, below |
@@ -168,7 +168,7 @@ The hard case is telling apart *"I'm correcting myself"* and *"I've just contrad
 
 1. **Consistency rules in code.** For example, `has_children: false` plus named children is impossible, so the turn's conflicting updates are dropped and the user is asked. This worked until the model changed *both* fields at once, which is internally consistent.
 2. **Model must declare corrections.** Each update carries `is_correction`, and the state manager refuses to overwrite a known value without it. Instead it asks: *"Earlier you told me you don't have children, but now it sounds like you have a child named Tom. Which is correct?"* Refinements ("James" → "James Smith") and additions to a list are not treated as overwrites.
-3. **Two-key rule.** Manual testing then showed the model, given more history, flagging "leave my watch to my son Tom" as a *correction*. Now an overwrite needs **both** the model's flag **and** evidence in the user's own message: correction language ("actually", "sorry", "I meant", "instead"…) or a reply to the app's own "Which is correct?" question (`lib/corrections.ts`).
+3. **Two-key rule.** Manual testing then showed the model, given more history, flagging "leave my watch to my son Tom" as a *correction*. Now an overwrite needs **both** the model's flag **and** evidence in the user's own message: correction language ("actually", "sorry", "I meant", "instead"…) or a reply to the app's own "Which is correct?" question (`lib/userSignals.ts`).
 
 The failure modes are deliberately lopsided. If the regex misses a genuine correction, the user answers one extra question. If a false correction got through, wrong data would silently land in the document. I chose the failure that's visible and cheap.
 
@@ -191,18 +191,19 @@ Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is abo
 
 ## Testing
 
-`npm test` runs 83 tests in about 1 second, with no network:
+`npm test` runs 111 tests in about 2 seconds, with no network:
 
 - **`stateManager.test.ts`**: valid/partial updates, corrections, per-field type rejection (a bad field doesn't sink the turn), unconfirmed values, derived facts, contradictions, the overwrite guard, completeness
 - **`llm.test.ts`**: schema validation of raw output against fixtures (not JSON, truncated, missing reply, unknown field, bad enum), repair retry, give-up after two bad outputs, provider fall-through, never-throws, prompt contains state, history trimming, env config
 - **`chatService.test.ts`**: a full turn with fixture outputs: valid, correction, ambiguous → follow-up not guess, unclear → no change, contradiction blocked, wrongly typed value → the model's false "noted!" is replaced, malformed twice → fallback; a full offline interview with the mock ending in a complete document
-- **`corrections.test.ts`**: the correction-cue detector
+- **`userSignals.test.ts`**: the correction and uncertainty detectors
+- **`documentPdf.test.ts`**: PDF contains the details and disclaimer, shows placeholders, paginates
 - **`documentGen.test.ts`**: complete state renders correctly, disclaimer always present, placeholders not guesses, "none" ≠ unknown, unconfirmed ignored, deterministic
 - **`apiRoute.test.ts`**: HTTP contract: 200 shape, 400 on bad JSON / bad state / wrong last role
 
 Fixtures: [`tests/fixtures/llmResponses.ts`](tests/fixtures/llmResponses.ts) contains valid, ambiguous, contradictory and malformed model outputs.
 
-**Live evals** (`npm run test:live`) run 10 behavioural scenarios against the real model: multi-field extraction, the brief's "My brother James." example, hedging, "not sure yet", explicit correction, contradiction (with and without prior history), no re-asking, "no kids", prompt injection. They're separate from `npm test` because they're slow, cost tokens and aren't deterministic. The latest output is committed in [`tests/live/transcript.md`](tests/live/transcript.md).
+**Live evals** (`npm run test:live`) run 12 behavioural scenarios against the real model: multi-field extraction, the brief's "My brother James." example, hedging, "not sure yet", explicit correction, contradiction (with and without prior history), "my mom" as executor, "idk" for gifts, no re-asking, "no kids", prompt injection. They're separate from `npm test` because they're slow, cost tokens and aren't deterministic. The latest output is committed in [`tests/live/transcript.md`](tests/live/transcript.md).
 
 ---
 
@@ -235,7 +236,7 @@ The mock (`mockProvider.ts`) implements the same interface and returns the same 
 **Product**
 - Field-level editing in the preview (click to fix) as an alternative to chatting.
 - Richer schema: structured addresses, gifts as `{ item, recipient }`, multiple executors, validation such as postcode format.
-- Export to PDF/DOCX; accessibility audit; i18n.
+- Embed a Unicode font in the PDF (jsPDF's built-in fonts are Latin-only, so e.g. Devanagari addresses wouldn't render); DOCX export; accessibility audit; i18n.
 - Legal review of the document template. This version is explicitly fictional.
 
 ---

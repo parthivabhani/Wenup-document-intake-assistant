@@ -4,7 +4,7 @@ import { generateDocument, documentToText } from "@/lib/documentGen";
 import { createMockProvider } from "@/lib/llm/mockProvider";
 import { applyUpdates, isComplete } from "@/lib/stateManager";
 import { emptyState, type ChatMessage, type IntakeState } from "@/lib/schema";
-import { AMBIGUOUS, CONTRADICTORY, MALFORMED, VALID } from "./fixtures/llmResponses";
+import { AMBIGUOUS, CONTRADICTORY, MALFORMED, OBSERVED, VALID } from "./fixtures/llmResponses";
 import { scriptedProvider } from "./helpers";
 
 const live = (...script: string[]) => ({
@@ -85,6 +85,29 @@ describe("handleChatTurn with scripted model outputs", () => {
     expect(res.meta.mode).toBe("fallback");
     expect(res.state).toEqual(emptyState());
     expect(res.reply).toMatch(/What is your full name\?/);
+  });
+});
+
+describe("handleChatTurn: regressions from manual testing", () => {
+  it("'my mom' keeps the relationship but not 'mom' as a name, and asks for her name", async () => {
+    const res = await handleChatTurn({ messages: say("my mom"), state: emptyState() }, live(OBSERVED.relationshipAsName));
+    expect(res.state.fields.executor).toEqual({ name: null, relationship: "mother" });
+    expect(res.rejected.map((r) => [r.update.field, r.kind])).toEqual([["executor.name", "invalid"]]);
+    expect(res.reply).toBe("Noted that your executor is your mother. What is their name?");
+  });
+
+  it("'idk' is not 'none': an uncertain empty list is held for confirmation", async () => {
+    const res = await handleChatTurn({ messages: say("idk what to leave"), state: emptyState() }, live(OBSERVED.unsureRecordedAsNone));
+    expect(res.state.fields.specific_gifts).toBeNull();
+    expect(res.state.unconfirmed).toEqual([
+      { field: "specific_gifts", value: [], note: "You sounded unsure; confirm there are none" },
+    ]);
+    expect(res.reply).toMatch(/Should I record that you have no specific gifts/);
+  });
+
+  it("a clear 'none' is still recorded as none", async () => {
+    const res = await handleChatTurn({ messages: say("No gifts, thanks"), state: emptyState() }, live(OBSERVED.unsureRecordedAsNone));
+    expect(res.state.fields.specific_gifts).toEqual([]);
   });
 });
 

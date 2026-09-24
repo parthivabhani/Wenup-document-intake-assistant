@@ -8,12 +8,21 @@ export function DocumentPreview({ state }: { state: IntakeState }) {
   // Same pure function the server would use: the preview can't drift from the state.
   const doc = generateDocument(state);
 
-  function download() {
-    const blob = new Blob([documentToText(doc)], { type: "text/plain;charset=utf-8" });
+  function saveBlob(blob: Blob, filename: string) {
     const url = URL.createObjectURL(blob);
-    const a = Object.assign(document.createElement("a"), { href: url, download: "personal-wishes-draft.txt" });
+    const a = Object.assign(document.createElement("a"), { href: url, download: filename });
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function downloadTxt() {
+    saveBlob(new Blob([documentToText(doc)], { type: "text/plain;charset=utf-8" }), "personal-wishes-draft.txt");
+  }
+
+  async function downloadPdf() {
+    // Loaded on demand so the PDF library isn't in the initial bundle.
+    const { documentToPdf } = await import("@/lib/documentPdf");
+    saveBlob(documentToPdf(doc).output("blob"), "personal-wishes-draft.pdf");
   }
 
   return (
@@ -24,9 +33,14 @@ export function DocumentPreview({ state }: { state: IntakeState }) {
         >
           {doc.isDraftComplete ? "✓ Draft complete" : "Draft in progress: gaps are highlighted"}
         </span>
-        <button onClick={download} className="btn btn-violet btn-sm">
-          Download .txt
-        </button>
+        <div className="flex gap-2">
+          <button onClick={downloadPdf} className="btn btn-violet btn-sm">
+            Download PDF
+          </button>
+          <button onClick={downloadTxt} className="btn btn-outline btn-sm">
+            .txt
+          </button>
+        </div>
       </div>
 
       <article className="rounded-sm bg-white px-7 py-9 shadow-[0_1px_0_#0001,0_12px_30px_-12px_#24006740] sm:px-12 sm:py-12">

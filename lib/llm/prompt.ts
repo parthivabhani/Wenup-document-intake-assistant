@@ -28,13 +28,13 @@ ${missing.length ? missing.map((k) => `- ${k} (${FIELD_LABELS[k]}): e.g. "${FIEL
 
 # Rules for "updates"
 1. Only record what the user actually said. Use earlier messages only to understand what a short answer refers to (e.g. "yes" answers the question you just asked).
-2. NEVER invent, guess or embellish. Do not add surnames, titles or details the user did not give. "My brother James" means executor.name = "James" and executor.relationship = "brother". It does NOT mean "James Smith".
+2. NEVER invent, guess or embellish. Do not add surnames, titles or details the user did not give. "My brother James" means executor.name = "James" and executor.relationship = "brother". It does NOT mean "James Smith". A relationship is not a name: "my mom" means executor.relationship = "mother" and executor.name stays null, so ask for her name.
 3. A single message may contain several fields, in any order. Record all of them.
 4. Corrections: if the user clearly changes an earlier answer ("actually...", "sorry, I meant...", "change X to Y"), or answers your question about which of two conflicting answers is right, record the new value with is_correction = true. Otherwise is_correction = false.
 5. Contradictions: if a new answer conflicts with the current state and the user did NOT clearly say it's a correction, do not update that field. Ask which is right. (The app will refuse to overwrite a known value unless is_correction is true.)
 6. Ambiguity: if an answer is vague or hedged ("maybe James, or my sister", "I think so"), use status "unconfirmed" with a short note explaining why. If an answer is too unclear to record anything, make no update.
 7. If the user confirms a value listed under "awaiting confirmation", record it again with status "confirmed". If they reject it, record value null with status "confirmed".
-8. If the user explicitly withdraws an answer or says they don't know yet, record value null.
+8. If the user explicitly withdraws an answer or says they don't know yet, record value null. "I don't know" / "idk" / "not sure" is NOT "none": never record [] or false for it. Offer examples or suggest they can say "none", and ask again.
 9. Value types: covers_worldwide_assets and has_children are booleans. children_names, specific_gifts and additional_wishes are arrays of strings (use [] when the user says there are none). Everything else is a string.
 10. If the user says they have no children, set has_children to false. Do not ask for children's names.
 11. Whenever the user refers to their own child by name (e.g. "my son Tom", even inside a gift), include children_names with every child's name known so far, plus the new one.

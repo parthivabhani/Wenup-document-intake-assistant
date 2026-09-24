@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { userSignalledCorrection } from "@/lib/corrections";
+import { userExpressedUncertainty, userSignalledCorrection } from "@/lib/userSignals";
 import type { ChatMessage } from "@/lib/schema";
 
 const user = (content: string): ChatMessage => ({ role: "user", content });
@@ -39,4 +39,15 @@ describe("userSignalledCorrection", () => {
   it("is false when the last message isn't from the user", () => {
     expect(userSignalledCorrection([user("actually"), assistant("ok")])).toBe(false);
   });
+});
+
+describe("userExpressedUncertainty", () => {
+  it.each(["idk what to leave", "idk...", "I'm not sure", "no idea", "I don't know yet", "maybe later"])(
+    "detects uncertainty in %j",
+    (text) => expect(userExpressedUncertainty([user(text)])).toBe(true),
+  );
+
+  it.each(["none", "No gifts, thanks", "Nothing else", "James"])("treats %j as a clear answer", (text) =>
+    expect(userExpressedUncertainty([user(text)])).toBe(false),
+  );
 });

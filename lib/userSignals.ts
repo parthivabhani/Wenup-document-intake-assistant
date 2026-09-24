@@ -1,6 +1,11 @@
 import type { ChatMessage } from "./schema";
 
 /**
+ * Deterministic checks on the user's own words, used as a second opinion on
+ * what the model proposes. Both are deliberately conservative.
+ */
+
+/**
  * Deterministic second key for overwriting a known value.
  *
  * The model marks updates with `is_correction`, but in testing it sometimes
@@ -25,4 +30,18 @@ export function userSignalledCorrection(messages: ChatMessage[]): boolean {
 
   const previous = messages[messages.length - 2];
   return previous?.role === "assistant" && previous.content.includes(CONFLICT_QUESTION_MARKER);
+}
+
+/**
+ * "idk", "not sure", "no idea"... In testing, the model turned "idk what to leave"
+ * into specific_gifts = [] ("none"), which silently completed the draft. Uncertainty
+ * is not an answer, so an explicit "none" given in an uncertain message is held
+ * for confirmation instead of being applied.
+ */
+const UNCERTAINTY_CUES =
+  /\b(idk|dunno|not sure|unsure|no idea|don'?t know|do not know|haven'?t decided|not decided|undecided|maybe|perhaps|i guess|not yet)\b/i;
+
+export function userExpressedUncertainty(messages: ChatMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  return last?.role === "user" && UNCERTAINTY_CUES.test(last.content);
 }

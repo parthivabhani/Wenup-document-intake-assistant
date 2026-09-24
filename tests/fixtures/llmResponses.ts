@@ -54,6 +54,23 @@ export const CONTRADICTORY = {
   }),
 };
 
+/** Real outputs seen in manual testing (see AI_LOG.md). */
+export const OBSERVED = {
+  /** "my mom" -> the model used the relationship word as the name. */
+  relationshipAsName: json({
+    updates: [
+      { field: "executor.name", value: "mom", status: "confirmed", is_correction: false, note: null },
+      { field: "executor.relationship", value: "mother", status: "confirmed", is_correction: false, note: null },
+    ],
+    reply: "Got it, your executor will be your mom. Do you have any specific gifts you'd like to leave to someone?",
+  }),
+  /** "idk what to leave" -> the model recorded "none". */
+  unsureRecordedAsNone: json({
+    updates: [{ field: "specific_gifts", value: [], status: "confirmed", is_correction: false, note: null }],
+    reply: "No problem, we'll leave specific gifts empty for now. Do you have any additional wishes?",
+  }),
+};
+
 export const MALFORMED = {
   notJson: "Sure! Your name is Jane Smith.",
   truncatedJson: '{"updates": [{"field": "full_name", "value": "Ja',

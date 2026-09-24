@@ -153,6 +153,27 @@ run("live model behaviour", () => {
     expect(res.reply).toContain("?");
   });
 
+  it("regression: 'my mom' is a relationship, not a name", async () => {
+    const res = await turn(
+      withFields(confirmed("full_name", "Parthiv Abhani"), confirmed("has_children", false)),
+      "my mom",
+      "Who would you like to appoint as your executor?",
+    );
+    expect(res.state.fields.executor.name).toBeNull();
+    expect(res.state.fields.executor.relationship?.toLowerCase()).toMatch(/mother|mom|mum/);
+    expect(res.reply.toLowerCase()).toContain("name");
+  });
+
+  it("regression: 'idk' is not recorded as 'no gifts'", async () => {
+    const res = await turn(
+      withFields(confirmed("full_name", "Parthiv Abhani"), confirmed("has_children", false)),
+      "idk what to leave",
+      "Are there any specific gifts you'd like to leave to someone? (It's fine to say none.)",
+    );
+    expect(res.state.fields.specific_gifts).toBeNull();
+    expect(res.reply).toContain("?");
+  });
+
   it("does not re-ask for fields already captured", async () => {
     const res = await turn(
       withFields(confirmed("full_name", "Jane Smith"), confirmed("home_address", "1 High St, Bristol")),

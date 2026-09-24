@@ -15,6 +15,22 @@ import { z } from "zod";
 const Text = z.string().trim().min(1).max(500);
 const TextList = z.array(Text).max(20);
 
+/**
+ * A relationship word is not a name. In testing, "my mom" was saved as
+ * executor.name = "mom"; the relationship belongs in executor.relationship and
+ * the name stays unknown until the user gives it.
+ */
+const RELATIONSHIP_ONLY =
+  /^(my\s+|the\s+|our\s+)?(best\s+|older\s+|younger\s+|big\s+|little\s+)?(mom|mum|mother|mommy|mummy|ma|dad|father|daddy|papa|pa|parents?|brother|sister|siblings?|wife|husband|spouse|partner|son|daughter|child|kid|friend|uncle|aunt|auntie|cousin|grandma|grandmother|granny|grandpa|grandfather|nephew|niece|fianc[eé]e?|boyfriend|girlfriend|solicitor|lawyer|accountant|neighbou?r|in-law|mother-in-law|father-in-law)s?$/i;
+
+export function isRelationshipWord(value: string): boolean {
+  return RELATIONSHIP_ONLY.test(value.trim());
+}
+
+const PersonName = Text.refine((v) => !isRelationshipWord(v), {
+  message: "A relationship (e.g. 'mom') is not a name",
+});
+
 export const IntakeFieldsSchema = z.object({
   full_name: Text.nullable(),
   home_address: Text.nullable(),
@@ -54,8 +70,8 @@ export const FIELD_VALUE_SCHEMAS = {
   home_address: Text,
   covers_worldwide_assets: z.boolean(),
   has_children: z.boolean(),
-  children_names: TextList,
-  "executor.name": Text,
+  children_names: z.array(PersonName).max(20),
+  "executor.name": PersonName,
   "executor.relationship": Text,
   specific_gifts: TextList,
   additional_wishes: TextList,

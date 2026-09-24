@@ -62,7 +62,7 @@ It doesn't count refinements ("James" → "James Smith") or list additions ("I a
 **v3: two-key rule, found by clicking through the real UI.** In the browser, with the full conversation as history, the same sentence produced:
 > `has_children = true (correction)` · `children_names = ["Tom"] (correction)`
 
-The model marked a contradiction as a correction. **So the model's flag alone can't be trusted.** Now an overwrite needs both the model's flag **and** evidence in the user's own words: correction language ("actually", "sorry", "I meant", "instead"…) or a reply to the app's own "Which is correct?" question (`lib/corrections.ts`).
+The model marked a contradiction as a correction. **So the model's flag alone can't be trusted.** Now an overwrite needs both the model's flag **and** evidence in the user's own words: correction language ("actually", "sorry", "I meant", "instead"…) or a reply to the app's own "Which is correct?" question (`lib/userSignals.ts`).
 
 I accepted a regex here knowingly. It's crude, but its failure mode is safe: a missed genuine correction costs one extra question, while a false correction would silently put wrong data in the document. Added this exact conversation as a live regression test. I'd replace the regex with a proper UI confirmation in production (see README).
 
@@ -99,7 +99,28 @@ I shared screenshots of wenup.co.uk and asked for a more polished UI and a landi
 - Caught in review: the first draft of the hero said *"Nothing stored on a server"*. That isn't true (messages go to the LLM provider), so it was changed to "No sign-up needed". The hero illustration also showed a "Surname" field that doesn't exist in the schema; it was replaced with real fields.
 - Bug found in the mobile check: the "How it works" button appeared on phones despite `hidden`. Cause: custom `.btn` CSS was unlayered, and in Tailwind v4 unlayered CSS beats utility classes. Moved it into `@layer components`.
 
-## 9. Evidence
+## 9. Two bugs from my own test run, and PDF export
+
+I did a full conversation myself and pasted the transcript back. Two problems:
+
+> **Me:** my mom
+> **Assistant:** Got it, your executor will be your mom, and her relationship is mother.
+> *(state: `executor.name = "mom"`)*
+
+> **Me:** idk what to leave
+> **Assistant:** No problem, we'll leave specific gifts empty for now.
+> *(state: `specific_gifts = []`, which means "the user said none", so the draft was marked complete)*
+
+I only noticed the first one. Claude pointed out the second: "idk" was silently turned into an answer, which breaks the *don't invent facts* rule just as much, and it's harder to spot because the reply sounded reasonable.
+
+Fixed the same way as corrections: a prompt rule **plus** a deterministic guard, so the fix doesn't depend on the model:
+- `executor.name` and children's names reject bare relationship words (`mom`, `my mother`, `best friend`, `the solicitor`...). Real names that start with those words ("Sister Mary Joseph", "Momo") still pass. The app replies "Noted that your executor is your mother. What is their name?"
+- If the user's message sounds uncertain (`idk`, `not sure`, `no idea`...), an explicit "none" is held as *unconfirmed* and the app asks "Should I record that you have no specific gifts, or would you like to add some?"
+- Both transcripts are now fixtures in `tests/fixtures/llmResponses.ts` (`OBSERVED`) and live regression evals. After the prompt fix the model handles both correctly on its own; the code guards are the backstop.
+
+Also added **Download PDF** (jsPDF, loaded only when clicked). It renders the same `DraftDocument` as the preview and `.txt`, so the three can't disagree. Known limitation, noted in the README: jsPDF's built-in fonts are Latin-only.
+
+## 10. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.
