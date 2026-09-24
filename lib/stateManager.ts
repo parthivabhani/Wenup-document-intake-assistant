@@ -64,7 +64,7 @@ function setField(fields: IntakeFields, key: FieldKey, value: FieldValue | null)
 export type ApplyOptions = {
   /**
    * Whether the user's own message shows they're correcting an earlier answer
-   * (see lib/corrections.ts). Without it, the model's is_correction flag is
+   * (see lib/userSignals.ts). Without it, the model's is_correction flag is
    * ignored. Defaults to false: the safe choice is to ask.
    */
   userSignalledCorrection?: boolean;

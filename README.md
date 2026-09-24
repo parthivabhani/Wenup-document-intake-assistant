@@ -25,7 +25,7 @@ npm run dev                  # http://localhost:3000
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server on :3000 |
-| `npm test` | 111 unit/integration tests. No network, no key needed |
+| `npm test` | 112 unit/integration tests. No network, no key needed |
 | `npm run test:live` | Behavioural evals against the real model (needs `GROQ_API_KEY`). Writes [`tests/live/transcript.md`](tests/live/transcript.md) |
 | `npm run typecheck` / `npm run lint` | Static checks |
 | `npm run build && npm start` | Production build |
@@ -185,13 +185,13 @@ The failure modes are deliberately lopsided. If the regex misses a genuine corre
 
 A turn stops starting new attempts after 40s (`TURN_DEADLINE_MS`), so a chain of slow providers can't exceed the 60s serverless function limit.
 
-Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is about 1.5k tokens. My first live eval run exhausted the primary model in 4 requests and quietly fell through to the weakest model, which then produced visibly worse behaviour. Each model on Groq has its own budget, so the chain adds capacity as well as redundancy. `meta.provider` and the "Last turn" panel in the UI show which model answered.
+Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is about 1.5k tokens. My first live eval run exhausted the primary model in 4 requests and quietly fell through to the weakest model, which then produced visibly worse behaviour. Each model on Groq has its own budget, so the chain adds capacity as well as redundancy. `meta.provider` and the "Behind the scenes" panel in the UI show which model answered.
 
 ---
 
 ## Testing
 
-`npm test` runs 111 tests in about 2 seconds, with no network:
+`npm test` runs 112 tests in about 2 seconds, with no network:
 
 - **`stateManager.test.ts`**: valid/partial updates, corrections, per-field type rejection (a bad field doesn't sink the turn), unconfirmed values, derived facts, contradictions, the overwrite guard, completeness
 - **`llm.test.ts`**: schema validation of raw output against fixtures (not JSON, truncated, missing reply, unknown field, bad enum), repair retry, give-up after two bad outputs, provider fall-through, never-throws, prompt contains state, history trimming, env config

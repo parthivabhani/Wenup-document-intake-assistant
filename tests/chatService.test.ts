@@ -5,7 +5,7 @@ import { createMockProvider } from "@/lib/llm/mockProvider";
 import { applyUpdates, isComplete } from "@/lib/stateManager";
 import { emptyState, type ChatMessage, type IntakeState } from "@/lib/schema";
 import { AMBIGUOUS, CONTRADICTORY, MALFORMED, OBSERVED, VALID } from "./fixtures/llmResponses";
-import { scriptedProvider } from "./helpers";
+import { rateLimited, scriptedProvider } from "./helpers";
 
 const live = (...script: string[]) => ({
   mode: "live" as const,
@@ -78,6 +78,14 @@ describe("handleChatTurn with scripted model outputs", () => {
     expect(res.state.fields.has_children).toBeNull();
     expect(res.reply).not.toMatch(/Great, noted/);
     expect(res.reply).toMatch(/Do you have any children\?/);
+  });
+
+  it("when no provider is reachable, it says so instead of asking the user to rephrase", async () => {
+    const down = { mode: "live" as const, providers: [scriptedProvider("p1", [rateLimited("p1")]).provider] };
+    const res = await handleChatTurn({ messages: say("I'm Jane"), state: emptyState() }, down);
+    expect(res.meta.mode).toBe("fallback");
+    expect(res.reply).toMatch(/temporarily unavailable/);
+    expect(res.reply).not.toMatch(/saying it another way/);
   });
 
   it("malformed output twice falls back to a clarifying question without crashing", async () => {

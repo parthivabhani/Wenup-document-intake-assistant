@@ -21,8 +21,13 @@ export async function handleChatTurn(
 
   if (!result.ok) {
     console.error("LLM turn failed; using fallback question", result.errors);
+    // Don't ask the user to rephrase when rephrasing can't help (no model reachable).
+    const reply =
+      result.reason === "unavailable"
+        ? "Sorry, the assistant is temporarily unavailable, so I couldn't record that. Please try sending your message again in a moment."
+        : `Sorry, I had trouble processing that. Could you try saying it another way? ${nextQuestion(state)}`;
     return {
-      reply: `Sorry, I had trouble processing that. Could you try saying it another way? ${nextQuestion(state)}`,
+      reply,
       state,
       applied: [],
       rejected: [],

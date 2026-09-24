@@ -36,7 +36,7 @@ feature count. Not production-ready — this is a scoped exercise.
   JSON output, one repair retry, provider fall-through, never throws; providersFromEnv)
 - `lib/stateManager.ts` — the only code that changes state: per-field validation, overwrite guard,
   merge, derived facts, cross-field conflicts. Never lets unvalidated data touch state
-- `lib/corrections.ts` — deterministic check that the user's words actually signal a correction
+- `lib/userSignals.ts` — deterministic checks on the user's words: did they signal a correction? uncertainty?
 - `lib/chatService.ts` — one turn: runTurn → applyUpdates → choose reply (overrides model on conflict/invalid)
 - `lib/documentGen.ts` — pure function: state -> draft document (no LLM)
 - `app/api/chat/route.ts` — orchestration only: rate limit, validate body, call chatService

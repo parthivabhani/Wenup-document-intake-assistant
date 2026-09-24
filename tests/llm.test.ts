@@ -44,8 +44,7 @@ describe("runTurn: retries and fallbacks", () => {
     const { provider } = scriptedProvider("p1", [MALFORMED.notJson, MALFORMED.missingReply]);
     const { provider: p2, calls: p2Calls } = scriptedProvider("p2", [VALID.multiField]);
     const res = await runTurn(emptyState(), userSays("I'm Jane"), [provider, p2]);
-    expect(res.ok).toBe(false);
-    expect(res.attempts).toBe(2);
+    expect(res).toMatchObject({ ok: false, attempts: 2, reason: "invalid_output" });
     expect(p2Calls).toHaveLength(0);
   });
 
@@ -60,7 +59,7 @@ describe("runTurn: retries and fallbacks", () => {
     const { provider: p1 } = scriptedProvider("p1", [rateLimited("p1")]);
     const { provider: p2 } = scriptedProvider("p2", [new Error("socket hang up")]);
     const res = await runTurn(emptyState(), userSays("I'm Jane"), [p1, p2]);
-    expect(res.ok).toBe(false);
+    expect(res).toMatchObject({ ok: false, reason: "unavailable" });
     if (!res.ok) expect(res.errors).toHaveLength(2);
   });
 

@@ -134,7 +134,11 @@ Asked for scroll animations on the landing page, "not jumpy". Choices: sections 
 
 One detail caught while testing: the "Under the hood" grid lines are the list's background showing through 1px gaps, so fading whole cells would flash pale boxes. The content inside each cell is animated instead. Testing was also misleading at first: the browser pane was hidden, so transitions and IntersectionObserver didn't run and everything looked broken. I had to make the page render before measuring.
 
-## 12. Evidence
+## 12. Final pass against the brief
+
+Went through the brief line by line against the code and test results. Everything was covered, but one item deserved a real check: *"graceful handling of … missing configuration"*. "No key" was covered (demo mode); a **wrong key** (e.g. a typo pasted into Vercel) wasn't exercised. Tested it against the real APIs: no crash, 4 attempts across 3 providers, errors logged, but the user was told *"Could you try saying it another way?"*. That blames the user for a server problem, and rephrasing can never help. `runTurn` now reports **why** it failed (`unavailable` vs `invalid_output`), and when no model is reachable the user is told the assistant is temporarily unavailable instead. Added tests for both. Also fixed three stale doc references left over from renames.
+
+## 13. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

@@ -22,7 +22,13 @@ const RESPONSE_SCHEMA = (() => {
 
 export type TurnResult =
   | { ok: true; output: LLMTurnOutput; provider: string; attempts: number }
-  | { ok: false; attempts: number; errors: string[] };
+  | {
+      ok: false;
+      attempts: number;
+      errors: string[];
+      /** unavailable = no provider could be reached/authorised; invalid_output = a model answered but badly. */
+      reason: "unavailable" | "invalid_output";
+    };
 
 /**
  * One conversational turn. Tries each provider in order:
@@ -42,6 +48,7 @@ export async function runTurn(
   const history = messages.slice(-HISTORY_LIMIT);
   const errors: string[] = [];
   let attempts = 0;
+  let sawOutput = false;
 
   for (const provider of providers) {
     let conversation = history;
@@ -49,7 +56,7 @@ export async function runTurn(
     for (let attempt = 1; attempt <= 2; attempt++) {
       if (now() - startedAt > deadlineMs) {
         errors.push(`turn deadline of ${deadlineMs}ms reached; skipping ${provider.name}`);
-        return { ok: false, attempts, errors };
+        return { ok: false, attempts, errors, reason: sawOutput ? "invalid_output" : "unavailable" };
       }
       attempts++;
       let raw: string;
@@ -65,11 +72,12 @@ export async function runTurn(
         break; // try the next provider
       }
 
+      sawOutput = true;
       const parsed = parseTurnOutput(raw);
       if (parsed.ok) return { ok: true, output: parsed.output, provider: provider.name, attempts };
 
       errors.push(`[${provider.name}] invalid output (attempt ${attempt}): ${parsed.error}`);
-      if (attempt === 2) return { ok: false, attempts, errors };
+      if (attempt === 2) return { ok: false, attempts, errors, reason: "invalid_output" };
       conversation = [
         ...history,
         { role: "assistant", content: raw.slice(0, 2000) || "(empty)" },
@@ -78,7 +86,7 @@ export async function runTurn(
     }
   }
 
-  return { ok: false, attempts, errors };
+  return { ok: false, attempts, errors, reason: sawOutput ? "invalid_output" : "unavailable" };
 }
 
 export function parseTurnOutput(
