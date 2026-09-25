@@ -26,10 +26,11 @@ export function ScrollReveal() {
       { rootMargin: "0px 0px -12% 0px", threshold: 0.15 },
     );
 
-    // Anything already on screen is shown straight away, so nothing flickers.
+    // Anything already on screen, even just peeking in at the bottom edge, is shown
+    // straight away: hiding a peeking heading leaves a blank strip under the hero.
     const viewportBottom = window.innerHeight;
     targets.forEach((el) => {
-      if (el.getBoundingClientRect().top < viewportBottom * 0.9) el.classList.add("is-visible");
+      if (el.getBoundingClientRect().top < viewportBottom) el.classList.add("is-visible");
       else observer.observe(el);
     });
     root.classList.add("reveal-ready");
