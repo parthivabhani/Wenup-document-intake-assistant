@@ -19,9 +19,21 @@ type Props = {
   draftReady: boolean;
   onViewDraft: () => void;
   onDownloadPdf: () => void;
+  /** Demo mode (no API key): the scripted assistant takes one answer at a time, so hide the multi-detail examples. */
+  demoMode?: boolean;
 };
 
-export function ChatPanel({ messages, pending, error, onSend, onRetry, draftReady, onViewDraft, onDownloadPdf }: Props) {
+export function ChatPanel({
+  messages,
+  pending,
+  error,
+  onSend,
+  onRetry,
+  draftReady,
+  onViewDraft,
+  onDownloadPdf,
+  demoMode = false,
+}: Props) {
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -115,7 +127,7 @@ export function ChatPanel({ messages, pending, error, onSend, onRetry, draftRead
         <div ref={endRef} />
       </div>
 
-      {!hasUserMessages && (
+      {!hasUserMessages && !demoMode && (
         <div className="px-4 pb-3 sm:px-6">
           <p className="mb-2 font-display text-xs font-extrabold tracking-widest text-violet uppercase">
             Try giving several details at once

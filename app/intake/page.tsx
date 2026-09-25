@@ -103,6 +103,7 @@ export default function IntakePage() {
               draftReady={draftReady}
               onViewDraft={viewDraft}
               onDownloadPdf={() => downloadPdf(chat.state)}
+              demoMode={status?.mode === "mock"}
             />
           </div>
         </div>
