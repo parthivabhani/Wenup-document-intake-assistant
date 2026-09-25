@@ -102,6 +102,7 @@ describe("providersFromEnv: configuration", () => {
       GROQ_API_KEY: "x",
       CEREBRAS_API_KEY: "y",
       GEMINI_API_KEY: "z",
+      OPENROUTER_API_KEY: "w",
     } as unknown as NodeJS.ProcessEnv);
     expect(mode).toBe("live");
     expect(providers.map((p) => p.name)).toEqual([
@@ -110,6 +111,7 @@ describe("providersFromEnv: configuration", () => {
       "groq:qwen/qwen3.8-27b",
       "gemini:gemini-3.6-flash",
       "groq:openai/gpt-oss-20b",
+      "openrouter:nvidia/nemotron-3-super-120b-a12b:free",
     ]);
   });
 

@@ -77,6 +77,33 @@ describe("applyUpdates: corrections", () => {
     );
   });
 
+  it("changing the executor's relationship clears the now-stale name ('make my mom executor instead')", () => {
+    const s1 = stateWith([set("executor.name", "James"), set("executor.relationship", "brother")]);
+    const { state, applied } = applyUpdates(s1, [correct("executor.relationship", "mother")], USER_CORRECTS);
+    expect(state.fields.executor).toEqual({ name: null, relationship: "mother" });
+    expect(applied.map((u) => [u.field, u.value])).toContainEqual(["executor.name", null]);
+  });
+
+  it("changing the executor's name clears the now-stale relationship", () => {
+    const s1 = stateWith([set("executor.name", "James"), set("executor.relationship", "brother")]);
+    const { state } = applyUpdates(s1, [correct("executor.name", "Sarah")], USER_CORRECTS);
+    expect(state.fields.executor).toEqual({ name: "Sarah", relationship: null });
+  });
+
+  it("changing both executor fields together keeps both", () => {
+    const s1 = stateWith([set("executor.name", "James"), set("executor.relationship", "brother")]);
+    const { state } = applyUpdates(s1, [correct("executor.name", "Sarah"), correct("executor.relationship", "sister")], USER_CORRECTS);
+    expect(state.fields.executor).toEqual({ name: "Sarah", relationship: "sister" });
+  });
+
+  it("filling in or refining the executor's name keeps the relationship", () => {
+    const s1 = stateWith([set("executor.relationship", "mother")]);
+    const s2 = applyUpdates(s1, [set("executor.name", "Priya")]).state;
+    expect(s2.fields.executor).toEqual({ name: "Priya", relationship: "mother" });
+    const s3 = applyUpdates(s2, [set("executor.name", "Priya Smith")]).state;
+    expect(s3.fields.executor).toEqual({ name: "Priya Smith", relationship: "mother" });
+  });
+
   it("refining a value is not a contradiction (James -> James Smith)", () => {
     const s1 = stateWith([set("executor.name", "James")]);
     const { state, conflicts } = applyUpdates(s1, [set("executor.name", "James Smith")]);

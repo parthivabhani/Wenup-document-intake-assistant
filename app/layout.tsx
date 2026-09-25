@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: "Document Intake Assistant",
   description:
     "A conversational interview that builds a fictional Personal Wishes Document. Wenup engineering technical test by Parthiv Abhani.",
+  // A test submission, not a product: keep it out of search results.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

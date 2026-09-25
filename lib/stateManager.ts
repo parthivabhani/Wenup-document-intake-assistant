@@ -108,9 +108,15 @@ export function applyUpdates(
   for (const v of overwrite.blocked) {
     rejected.push({ update: v.update, kind: "conflict", reason: "Changes a known value without an explicit correction" });
   }
-  const unblocked = valid.filter((v) => !overwrite.blocked.includes(v));
+  const accepted = valid.filter((v) => !overwrite.blocked.includes(v));
 
-  // 3. Merge, then check cross-field consistency. If this turn introduced an
+  // 3. The executor's name and relationship describe one person. If a correction
+  //    replaces one with a genuinely different value and the other isn't restated,
+  //    the other is stale ("James" + "mother"), so it's reset to unknown and asked for.
+  const stale = staleExecutorCompanions(state, accepted);
+  const unblocked = [...accepted, ...stale];
+
+  // 4. Merge, then check cross-field consistency. If this turn introduced an
   //    inconsistency, drop its updates to the conflicting fields.
   let candidate = merge(state, unblocked);
   const consistency = findConflicts(candidate.fields);
@@ -134,13 +140,36 @@ export function applyUpdates(
   const rejectedSet = new Set(rejected.map((r) => r.update));
   return {
     state: candidate,
-    applied: updates.filter((u) => !rejectedSet.has(u)),
+    applied: [...updates, ...stale.map((s) => s.update)].filter((u) => !rejectedSet.has(u)),
     rejected,
     conflicts: [...overwrite.conflicts, ...consistency],
   };
 }
 
 type ValidUpdate = { update: FieldUpdate; value: FieldValue | null };
+
+const EXECUTOR_PAIR: Partial<Record<FieldKey, FieldKey>> = {
+  "executor.name": "executor.relationship",
+  "executor.relationship": "executor.name",
+};
+
+function staleExecutorCompanions(state: IntakeState, updates: ValidUpdate[]): ValidUpdate[] {
+  const touched = new Set(updates.map((u) => u.update.field));
+  const cleared: ValidUpdate[] = [];
+  for (const { update, value } of updates) {
+    const companion = EXECUTOR_PAIR[update.field];
+    if (!companion || update.status !== "confirmed" || value === null) continue;
+    const current = getField(state.fields, update.field);
+    if (current === null || isCompatibleChange(current, value)) continue; // first answer or refinement
+    if (touched.has(companion) || getField(state.fields, companion) === null) continue;
+    touched.add(companion);
+    cleared.push({
+      update: { field: companion, value: null, status: "confirmed", is_correction: true, note: "Cleared: the executor changed" },
+      value: null,
+    });
+  }
+  return cleared;
+}
 
 function findOverwriteConflicts(
   state: IntakeState,

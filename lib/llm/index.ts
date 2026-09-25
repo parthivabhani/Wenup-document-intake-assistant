@@ -182,6 +182,19 @@ export function providersFromEnv(env: NodeJS.ProcessEnv = process.env): {
       }),
     );
   }
+  if (env.OPENROUTER_API_KEY) {
+    // Last resort: a third company's infrastructure. Free tier = small daily quota and
+    // 6-10s replies in testing, so it only answers when everything above has failed.
+    providers.push(
+      createOpenAICompatibleProvider({
+        label: "openrouter",
+        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: env.OPENROUTER_API_KEY,
+        model: env.OPENROUTER_MODEL || "nvidia/nemotron-3-super-120b-a12b:free",
+        timeoutMs: 25_000,
+      }),
+    );
+  }
 
   return providers.length > 0
     ? { mode: "live", providers }

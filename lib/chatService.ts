@@ -2,7 +2,7 @@ import { runTurn, type LLMMode, type LLMProvider } from "./llm";
 import { FIELD_LABELS, type ChatRequest, type ChatResponse, type FieldUpdate, type IntakeState } from "./schema";
 import { FIELD_QUESTIONS, nextQuestion } from "./questions";
 import { userExpressedUncertainty, userSignalledCorrection } from "./userSignals";
-import { applyUpdates } from "./stateManager";
+import { applyUpdates, isComplete } from "./stateManager";
 
 /**
  * One chat turn, end to end: ask the model, validate and apply its proposed
@@ -51,6 +51,12 @@ export async function handleChatTurn(
   } else if (heldNone) {
     const label = FIELD_LABELS[heldNone].toLowerCase();
     reply = `That's fine, there's no rush. Should I record that you have no ${label}, or would you like to add some?`;
+  } else if (executorNameCleared(state, newState)) {
+    // The executor changed and only the relationship is known: ask for the name now.
+    reply = `Noted, your executor is now your ${newState.fields.executor.relationship}. What is their name?`;
+  } else if (claimsComplete(reply) && !isComplete(newState)) {
+    // Seen in testing: "The draft is complete" while a field was still unknown.
+    reply = `Thanks. ${nextQuestion(newState)}`;
   }
 
   const notable = rejected.filter((r) => r.kind !== "ignored");
@@ -94,4 +100,18 @@ function followUpForInvalid(field: FieldUpdate["field"], state: IntakeState): st
   }
   if (field === "children_names") return "What are your children's names?";
   return `I wasn't able to record your ${FIELD_LABELS[field].toLowerCase()} from that. ${FIELD_QUESTIONS[field]}`;
+}
+
+function executorNameCleared(before: IntakeState, after: IntakeState): boolean {
+  return (
+    before.fields.executor.name !== null &&
+    after.fields.executor.name === null &&
+    after.fields.executor.relationship !== null
+  );
+}
+
+const COMPLETION_CLAIM = /\b(draft|document)\b[^.?!]{0,30}\b(is|now)\b[^.?!]{0,15}\bcomplete\b|\ball set\b|\bthat'?s everything\b/i;
+
+function claimsComplete(reply: string): boolean {
+  return COMPLETION_CLAIM.test(reply);
 }

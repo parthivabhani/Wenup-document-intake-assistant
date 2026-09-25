@@ -180,6 +180,20 @@ run("live model behaviour", () => {
     expect(res.reply.toLowerCase()).toContain("name");
   });
 
+  it("regression: changing who the executor is doesn't leave the old name behind", async () => {
+    const res = await turn(
+      withFields(
+        confirmed("full_name", "Jane Smith"),
+        confirmed("executor.name", "James"),
+        confirmed("executor.relationship", "brother"),
+      ),
+      "Actually, make my mom the executor instead.",
+    );
+    expect(res.state.fields.executor.name).not.toBe("James");
+    expect(res.state.fields.executor.relationship?.toLowerCase()).toMatch(/mother|mom|mum/);
+    expect(res.reply.toLowerCase()).toContain("name");
+  });
+
   it("does not re-ask for fields already captured", async () => {
     const res = await turn(
       withFields(confirmed("full_name", "Jane Smith"), confirmed("home_address", "1 High St, Bristol")),

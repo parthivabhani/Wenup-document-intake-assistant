@@ -144,7 +144,18 @@ I wanted users not to miss the Draft document tab and its download button. Added
 
 Testing it by loading a finished session into storage exposed a real bug: **refresh-restore didn't work reliably.** The restore and save effects ran in the same pass, so the first save wrote the *empty* initial state over the saved session before the restored values rendered. React's dev-mode double effects made it fail every time; in production it only worked by timing luck. Fixed by gating saves on a `hydrated` state flag rather than a ref.
 
-## 14. Evidence
+## 14. OpenRouter backup, and what running the README's "Try these" script revealed
+
+I added an OpenRouter key. Tested it before wiring it in: the key is free tier (small daily quota). `qwen3.8-27b:free` returned 429 on every call (shared free pool); `nemotron-3-super-120b:free` handled the tricky cases well but took 6–10s. So it went in as the **last** fallback, after all Groq models and Gemini. The test also caught a bug in *my* provider code: OpenRouter once returned HTTP 200 with no `choices`, and `res.choices[0]` threw a TypeError that got logged as a "network" error. Now it's a typed server error, with tests for that and every HTTP status mapping.
+
+Then I asked for a "Try these" section in the README. Before publishing it, Claude ran the exact script against the real model, and it found three more problems that no single-turn test had:
+- **"Actually, make my mom the executor instead"** changed the relationship to *mother* but left the name as **James**, so the document would have said "I appoint James (my mother)". The name and relationship describe one person. Now, when a correction genuinely changes one of them and the other isn't restated, the stale half is cleared, and the app asks *"Noted, your executor is now your mother. What is their name?"*. First-time fills and refinements (James → James Smith) don't trigger this.
+- The model didn't ask for the new executor's name. That's covered by the rule above.
+- **"idk what else to add"** got the reply *"The draft is complete"*, which was false: a field was still unknown. If a reply claims completion while the state disagrees, it's now replaced with the real next question.
+
+All three are fixed in code (not just the prompt), with fixtures and a live regression eval. The final run of the script produces exactly the behaviour the README table promises. Lesson: multi-turn scripts find bugs that single-turn tests can't.
+
+## 15. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

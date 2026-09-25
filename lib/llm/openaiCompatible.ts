@@ -39,8 +39,10 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
             json_schema: { name: "intake_turn", strict: true, schema: request.responseSchema },
           },
         });
-        const content = res.choices[0]?.message?.content;
-        if (!content) throw new LLMProviderError(name, "server", "Empty response");
+        // Some gateways (seen with OpenRouter) return HTTP 200 with no `choices` at all,
+        // e.g. when the upstream model errored. Treat that as a server error, not a crash.
+        const content = res.choices?.[0]?.message?.content;
+        if (!content) throw new LLMProviderError(name, "server", "Empty or malformed response");
         return content;
       } catch (err) {
         throw toProviderError(name, err);

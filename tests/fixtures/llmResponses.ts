@@ -64,6 +64,16 @@ export const OBSERVED = {
     ],
     reply: "Got it, your executor will be your mom. Do you have any specific gifts you'd like to leave to someone?",
   }),
+  /** "Actually, make my mom the executor instead" -> relationship changed, name not asked for. */
+  executorChangedNameNotAsked: json({
+    updates: [{ field: "executor.relationship", value: "mother", status: "confirmed", is_correction: true, note: null }],
+    reply: "Understood, your mother will be the executor. Any additional wishes you'd like to include?",
+  }),
+  /** "idk what else to add" -> nothing recorded, but the model claimed the draft was complete. */
+  falseCompletionClaim: json({
+    updates: [],
+    reply: "No problem, we can leave additional wishes open for now. The draft is complete and you can add anything later.",
+  }),
   /** "idk what to leave" -> the model recorded "none". */
   unsureRecordedAsNone: json({
     updates: [{ field: "specific_gifts", value: [], status: "confirmed", is_correction: false, note: null }],

@@ -113,6 +113,25 @@ describe("handleChatTurn: regressions from manual testing", () => {
     expect(res.reply).toMatch(/Should I record that you have no specific gifts/);
   });
 
+  it("'make my mom the executor instead': clears the old name and asks for the new one", async () => {
+    const s1 = applyUpdates(emptyState(), [
+      { field: "executor.name", value: "James", status: "confirmed", is_correction: false, note: null },
+      { field: "executor.relationship", value: "brother", status: "confirmed", is_correction: false, note: null },
+    ]).state;
+    const res = await handleChatTurn({ messages: say("Actually, make my mom the executor instead."), state: s1 }, live(OBSERVED.executorChangedNameNotAsked));
+    expect(res.state.fields.executor).toEqual({ name: null, relationship: "mother" });
+    expect(res.reply).toBe("Noted, your executor is now your mother. What is their name?");
+  });
+
+  it("a false 'the draft is complete' claim is replaced by the real next question", async () => {
+    const s1 = applyUpdates(emptyState(), [
+      { field: "full_name", value: "Jane", status: "confirmed", is_correction: false, note: null },
+    ]).state;
+    const res = await handleChatTurn({ messages: say("idk what else to add"), state: s1 }, live(OBSERVED.falseCompletionClaim));
+    expect(res.reply).not.toMatch(/complete/i);
+    expect(res.reply).toMatch(/home address\?/);
+  });
+
   it("a clear 'none' is still recorded as none", async () => {
     const res = await handleChatTurn({ messages: say("No gifts, thanks"), state: emptyState() }, live(OBSERVED.unsureRecordedAsNone));
     expect(res.state.fields.specific_gifts).toEqual([]);
