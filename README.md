@@ -7,11 +7,13 @@
 
 # Document Intake Assistant - Demo by Parthiv Abhani
 
-[![Live demo](https://img.shields.io/badge/-Live_demo_%E2%86%97-4f1fbf)](https://parthiv-wenup-document-intake-assistant.vercel.app)
-![Next.js 16](https://img.shields.io/badge/-Next.js_16-3a119a)
-![TypeScript](https://img.shields.io/badge/-TypeScript-3a119a)
-[![125 automated tests](https://img.shields.io/badge/-125_automated_tests-2ea043)](#testing)
-[![14 live model evals](https://img.shields.io/badge/-14_live_model_evals-2ea043)](tests/live/transcript.md)
+<p>
+  <a href="https://parthiv-wenup-document-intake-assistant.vercel.app"><img src="https://img.shields.io/badge/-Live_demo_%E2%86%97-5b4a9e?style=flat-square" alt="Live demo"></a>&nbsp;
+  <img src="https://img.shields.io/badge/-Next.js_16-5b4a9e?style=flat-square" alt="Next.js 16">&nbsp;
+  <img src="https://img.shields.io/badge/-TypeScript-5b4a9e?style=flat-square" alt="TypeScript">&nbsp;
+  <a href="#testing"><img src="https://img.shields.io/badge/-125_automated_tests-5b4a9e?style=flat-square" alt="125 automated tests"></a>&nbsp;
+  <a href="tests/live/transcript.md"><img src="https://img.shields.io/badge/-14_live_model_evals-5b4a9e?style=flat-square" alt="14 live model evals"></a>
+</p>
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
