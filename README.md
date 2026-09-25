@@ -15,7 +15,7 @@
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
-**Live demo:** https://parthiv-wenup-document-intake-assistant.vercel.app · **Repo:** https://github.com/parthivabhani/Wenup-document-intake-assistant · **AI log:** [AI_LOG.md](AI_LOG.md)
+**[Live demo →](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes](#try-these-2-minutes)**
 
 ![The app: chat on the left, live structured state on the right](docs/screenshots/app-details.png)
 
