@@ -17,9 +17,9 @@
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
-**[Live demo ↗](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes!](#try-these-2-minutes)**
-
 ![The app: chat on the left, live structured state on the right](docs/screenshots/app-details.png)
+
+**[Live demo ↗](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes!](#try-these-2-minutes)**
 
 The core idea: **the model proposes, the code decides.** The LLM reads the conversation and proposes field updates as strict JSON. Deterministic, tested TypeScript validates every proposal against a schema, refuses contradictions and unbacked overwrites, and owns the state. The draft document is a pure function of that validated state.
 
