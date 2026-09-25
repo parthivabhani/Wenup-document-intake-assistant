@@ -7,11 +7,11 @@
 
 # Document Intake Assistant
 
-[![Live demo](https://img.shields.io/badge/live_demo-online-4f1fbf)](https://parthiv-wenup-document-intake-assistant.vercel.app)
-![Next.js 16](https://img.shields.io/badge/Next.js-16-240067)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-240067)
-![Tests](https://img.shields.io/badge/tests-125_passing-2ea043)
-![Live evals](https://img.shields.io/badge/live_model_evals-14_passing-2ea043)
+[![Live demo](https://img.shields.io/badge/-Live_demo_%E2%86%97-4f1fbf)](https://parthiv-wenup-document-intake-assistant.vercel.app)
+![Next.js 16](https://img.shields.io/badge/-Next.js_16-3a119a)
+![TypeScript](https://img.shields.io/badge/-TypeScript-3a119a)
+![125 tests passing](https://img.shields.io/badge/-125_tests_passing-2ea043)
+![14 live model evals passing](https://img.shields.io/badge/-14_live_model_evals_passing-2ea043)
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
