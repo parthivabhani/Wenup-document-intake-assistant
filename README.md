@@ -203,7 +203,7 @@ This is enforced three times: (1) the JSON Schema is generated from the Zod sche
 | Multi-turn conversation | Client keeps the transcript; server sends the last 12 messages. Older context isn't needed because facts live in the state, which is sent in full every turn |
 | Explicit schema, not chat history, as source of truth | `IntakeState` in `lib/schema.ts`; the prompt is rebuilt from it every turn, including a code-computed list of missing fields |
 | Several fields in one answer | Model returns an array of updates. Live eval: one sentence → 4 fields |
-| Don't invent facts | Relationship words are rejected as names ("my mom" → relationship `mother`, name asked for); "idk" is never recorded as "none". Prompt rule plus live eval: "My brother James" → `name: "James"`, never "James Smith". Missing values stay `null` and show as _not yet provided_ in both preview and document |
+| Don't invent facts | Relationship words are rejected as names ("my mom" → relationship `mother`, name asked for); "idk" is never recorded as "none". Prompt rule plus live eval: "My brother James" → `name: "James"`, never "James Smith". (The brief's example state shows `"James Smith"`, but after only "My brother James." the surname would be a guess, so the app records "James"; if the user later says "James Smith", that's accepted as a refinement.) Missing values stay `null` and show as _not yet provided_ in both preview and document |
 | Unknown / unconfirmed values explicit | `null` for unknown; hedged answers go to `unconfirmed[]` with a note, are shown with an "Unconfirmed" badge, and are never put into the document |
 | Unclear answers → follow-up | No update + a question. "I'm not sure yet" leaves the field `null` |
 | Contradictions → follow-up | Two layers, below |
