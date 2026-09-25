@@ -161,6 +161,8 @@ Deployed on Vercel. Before calling it done, Claude ran the full "Try these" scri
 - The GitHub "About → Website" link, which Vercel filled in automatically, pointed at a URL returning **404** (an earlier project name). Fixed.
 - On desktop, the heading just below the hero was hidden until scrolled, leaving a blank strip at the fold. The reveal logic now shows anything already peeking into view.
 
+I also asked: does a fresh clone run with **no API keys at all**? Claude cloned the repo into an empty folder with no `.env.local`, then installed, built and started it. It came up in demo mode and completed a full interview. But the browser view showed the "Try giving several details at once" example buttons, which the one-question-at-a-time demo assistant can't handle (it would store the whole sentence as the full name). They're now hidden in demo mode, verified both ways (hidden with no key, shown on the live site).
+
 README screenshots were captured from the live site with headless Chrome, using the real replies from the live run, not staged text. The Mermaid diagram was rendered and checked before committing.
 
 ## 16. Evidence
