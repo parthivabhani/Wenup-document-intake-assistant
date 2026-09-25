@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# Document Intake Assistant
+# Document Intake Assistant - Demo by Parthiv Abhani
 
 [![Live demo](https://img.shields.io/badge/-Live_demo_%E2%86%97-4f1fbf)](https://parthiv-wenup-document-intake-assistant.vercel.app)
 ![Next.js 16](https://img.shields.io/badge/-Next.js_16-3a119a)
