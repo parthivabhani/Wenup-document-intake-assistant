@@ -7,11 +7,36 @@
 
 # Document Intake Assistant
 
+[![Live demo](https://img.shields.io/badge/live_demo-online-4f1fbf)](https://parthiv-wenup-document-intake-assistant.vercel.app)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-240067)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-240067)
+![Tests](https://img.shields.io/badge/tests-125_passing-2ea043)
+![Live evals](https://img.shields.io/badge/live_model_evals-14_passing-2ea043)
+
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
 **Live demo:** https://parthiv-wenup-document-intake-assistant.vercel.app · **Repo:** https://github.com/parthivabhani/Wenup-document-intake-assistant · **AI log:** [AI_LOG.md](AI_LOG.md)
 
+![The app: chat on the left, live structured state on the right](docs/screenshots/app-details.png)
+
 The core idea: **the model proposes, the code decides.** The LLM reads the conversation and proposes field updates as strict JSON. Deterministic, tested TypeScript validates every proposal against a schema, refuses contradictions and unbacked overwrites, and owns the state. The draft document is a pure function of that validated state.
+
+```mermaid
+flowchart LR
+    U["User message"] --> M["LLM proposes<br/>field updates (strict JSON)"]
+    M -- "malformed / provider down" --> F["Retry, then next model,<br/>then a safe reply"]
+    M --> V{"Code validates"}
+    V -- "wrong type" --> A["Rejected: ask again"]
+    V -- "contradiction or<br/>no correction cue" --> Q["Ask: which is correct?"]
+    V -- "hedged" --> H["Held as unconfirmed"]
+    V -- "valid" --> S[("Structured state")]
+    S --> D["documentGen<br/>(pure function, no LLM)"]
+    D --> P["Preview · PDF · .txt"]
+```
+
+| Landing page | Finished draft |
+|---|---|
+| ![Landing page](docs/screenshots/landing.png) | ![Draft document with PDF download](docs/screenshots/app-draft.png) |
 
 ## Try these (2 minutes)
 

@@ -155,7 +155,15 @@ Then I asked for a "Try these" section in the README. Before publishing it, Clau
 
 All three are fixed in code (not just the prompt), with fixtures and a live regression eval. The final run of the script produces exactly the behaviour the README table promises. Lesson: multi-turn scripts find bugs that single-turn tests can't.
 
-## 15. Evidence
+## 15. Deploy checks
+
+Deployed on Vercel. Before calling it done, Claude ran the full "Try these" script against the **live** API and did a phone-sized test on the live site (one message filled all 9 fields; the PDF downloaded). This caught two things that local testing couldn't:
+- The GitHub "About → Website" link, which Vercel filled in automatically, pointed at a URL returning **404** (an earlier project name). Fixed.
+- On desktop, the heading just below the hero was hidden until scrolled, leaving a blank strip at the fold. The reveal logic now shows anything already peeking into view.
+
+README screenshots were captured from the live site with headless Chrome, using the real replies from the live run, not staged text. The Mermaid diagram was rendered and checked before committing.
+
+## 16. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.
