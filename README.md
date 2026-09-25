@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# Document Intake Assistant - Demo by Parthiv Abhani
+# Document Intake Assistant - by Parthiv Abhani
 
 <p>
   <a href="https://parthiv-wenup-document-intake-assistant.vercel.app"><img src="https://img.shields.io/badge/-Live_demo_%E2%86%97-5b4a9e?style=flat-square" alt="Live demo"></a>&nbsp;
@@ -17,7 +17,7 @@
 
 A conversational interview that collects structured information and builds a draft **Personal Wishes Document** (fictional, not legal advice). Built for the Wenup engineering technical test.
 
-**[Live demo 📌](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes!](#try-these-2-minutes)**
+**[Live demo ←](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes!](#try-these-2-minutes)**
 
 ![The app: chat on the left, live structured state on the right](docs/screenshots/app-details.png)
 
