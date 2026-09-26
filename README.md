@@ -11,7 +11,7 @@
   <a href="https://parthiv-wenup-document-intake-assistant.vercel.app"><img src="https://img.shields.io/badge/-Live_demo_%E2%86%97-5b4a9e?style=flat-square" alt="Live demo"></a>&nbsp;
   <img src="https://img.shields.io/badge/-Next.js_16-5b4a9e?style=flat-square" alt="Next.js 16">&nbsp;
   <img src="https://img.shields.io/badge/-TypeScript-5b4a9e?style=flat-square" alt="TypeScript">&nbsp;
-  <a href="#testing"><img src="https://img.shields.io/badge/-125_automated_tests-5b4a9e?style=flat-square" alt="125 automated tests"></a>&nbsp;
+  <a href="#testing"><img src="https://img.shields.io/badge/-138_automated_tests-5b4a9e?style=flat-square" alt="138 automated tests"></a>&nbsp;
   <a href="tests/live/transcript.md"><img src="https://img.shields.io/badge/-14_live_model_evals-5b4a9e?style=flat-square" alt="14 live model evals"></a>
 </p>
 
@@ -77,7 +77,7 @@ npm run dev                  # http://localhost:3000
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server on :3000 |
-| `npm test` | 125 unit/integration tests. No network, no key needed |
+| `npm test` | 138 unit/integration tests. No network, no key needed |
 | `npm run test:live` | Behavioural evals against the real model (needs `GROQ_API_KEY`). Writes [`tests/live/transcript.md`](tests/live/transcript.md) |
 | `npm run typecheck` / `npm run lint` | Static checks |
 | `npm run build && npm start` | Production build |
@@ -245,7 +245,7 @@ Why: Groq's free tier allows 8k tokens/minute **per model**, and one turn is abo
 
 ## Testing
 
-`npm test` runs 125 tests in about 2 seconds, with no network:
+`npm test` runs 138 tests in about 2 seconds, with no network:
 
 - **`stateManager.test.ts`**: valid/partial updates, corrections, per-field type rejection (a bad field doesn't sink the turn), unconfirmed values, derived facts, contradictions, the overwrite guard, completeness
 - **`llm.test.ts`**: schema validation of raw output against fixtures (not JSON, truncated, missing reply, unknown field, bad enum), repair retry, give-up after two bad outputs, provider fall-through, never-throws, prompt contains state, history trimming, env config

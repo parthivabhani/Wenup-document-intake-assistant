@@ -132,6 +132,18 @@ describe("handleChatTurn: regressions from manual testing", () => {
     expect(res.reply).toMatch(/home address\?/);
   });
 
+  it("'no children' then 'my son' as executor: the model's reply is replaced by the contradiction question", async () => {
+    const noKids = applyUpdates(emptyState(), [
+      { field: "has_children", value: false, status: "confirmed", is_correction: false, note: null },
+    ]).state;
+    const res = await handleChatTurn({ messages: say("my son"), state: noKids }, live(OBSERVED.executorIsSonDespiteNoChildren));
+    expect(res.state.fields.executor.relationship).toBeNull();
+    expect(res.state.fields.has_children).toBe(false);
+    expect(res.reply).toBe(
+      "Earlier you told me you don't have children, but now it sounds like your executor is your son. Which is correct?",
+    );
+  });
+
   it("a clear 'none' is still recorded as none", async () => {
     const res = await handleChatTurn({ messages: say("No gifts, thanks"), state: emptyState() }, live(OBSERVED.unsureRecordedAsNone));
     expect(res.state.fields.specific_gifts).toEqual([]);

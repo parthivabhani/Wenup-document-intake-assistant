@@ -165,7 +165,13 @@ I also asked: does a fresh clone run with **no API keys at all**? Claude cloned 
 
 README screenshots were captured from the live site with headless Chrome, using the real replies from the live run, not staged text. The Mermaid diagram was rendered and checked before committing.
 
-## 16. Evidence
+## 16. A contradiction found after submitting
+
+After submitting, I tried the live app again and typed: no children ("nope"), then **"my son"** as executor, then "james". The draft said both *"I have no children"* and *"I appoint James (my son)"*. The contradiction check only compared "has children" with the children's names list, and here the child appeared in a different field (the executor's relationship), with the name in a separate message, so neither the code nor the model connected them.
+
+I was nervous about changing working code on deadline day, so we did it as one small rule next to the existing one: if "no children" is recorded and the executor's relationship is the user's own child (son, daughter, stepson...; matched exactly, so son-in-law, grandson and godson don't count), block it and ask *"Earlier you told me you don't have children, but now it sounds like your executor is your son. Which is correct?"*. Checks before pushing: all previous tests still pass, 13 new tests, my exact conversation replayed against the real model (the question fires, and "sorry, yes I do have a son, James" records James as both child and executor), and all 14 live evals. One eval ("my mom") failed once because the model asked for the address instead of the name; the data was still correct, it passed 3/3 on re-run, and it's unrelated to this change.
+
+## 17. Evidence
 
 - `tests/live/transcript.md`: latest real-model transcript for every scenario (provider, applied/rejected updates).
 - Git history: one commit per stage (core → LLM layer → UI + correction rule → docs), with each fix explained in the commit message.

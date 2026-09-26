@@ -269,7 +269,27 @@ export function findConflicts(fields: IntakeFields): Conflict[] {
       question: `I have a note that you don't have children, but you've also mentioned ${joinWithAnd(names)} as your children. ${CONFLICT_QUESTION_MARKER}`,
     });
   }
+  // Found in manual testing: "no children", then "my son" as executor, gave a draft saying
+  // both "I have no children" and "I appoint James (my son)".
+  const relationship = fields.executor.relationship;
+  if (fields.has_children === false && relationship && isOwnChild(relationship)) {
+    conflicts.push({
+      fields: ["has_children", "executor.relationship"],
+      question: `Earlier you told me you don't have children, but now it sounds like your executor is your ${relationship}. ${CONFLICT_QUESTION_MARKER}`,
+    });
+  }
   return conflicts;
+}
+
+/**
+ * "son", "my eldest daughter", "stepson"... Matched exactly, so relatives who aren't
+ * the user's own child ("son-in-law", "grandson", "godson") don't count.
+ */
+const OWN_CHILD =
+  /^(my\s+)?((eldest|oldest|youngest|younger|older|elder|middle|only|adopted|first|second)\s+)?(son|daughter|child|kid|stepson|stepdaughter|step-son|step-daughter)$/i;
+
+function isOwnChild(relationship: string): boolean {
+  return OWN_CHILD.test(relationship.trim());
 }
 
 // ---------------------------------------------------------------------------

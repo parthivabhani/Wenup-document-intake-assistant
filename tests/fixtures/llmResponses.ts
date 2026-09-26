@@ -74,6 +74,11 @@ export const OBSERVED = {
     updates: [],
     reply: "No problem, we can leave additional wishes open for now. The draft is complete and you can add anything later.",
   }),
+  /** "no children" earlier, then "my son" as executor: the model recorded it and asked his name. */
+  executorIsSonDespiteNoChildren: json({
+    updates: [{ field: "executor.relationship", value: "son", status: "confirmed", is_correction: false, note: null }],
+    reply: "Noted, your executor is your son. May I have his name, please?",
+  }),
   /** "idk what to leave" -> the model recorded "none". */
   unsureRecordedAsNone: json({
     updates: [{ field: "specific_gifts", value: [], status: "confirmed", is_correction: false, note: null }],

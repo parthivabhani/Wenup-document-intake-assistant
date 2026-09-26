@@ -263,6 +263,41 @@ describe("applyUpdates: derived facts and contradictions", () => {
     expect(conflicts[0].question).toMatch(/Tom and Sue/);
   });
 
+  it("'no children', then 'my son' as executor: blocked and asked (found in manual testing)", () => {
+    const s1 = stateWith([set("has_children", false)]);
+    const { state, conflicts, rejected } = applyUpdates(s1, [set("executor.relationship", "son")]);
+    expect(state.fields.executor.relationship).toBeNull();
+    expect(state.fields.has_children).toBe(false);
+    expect(rejected.map((r) => [r.update.field, r.kind])).toEqual([["executor.relationship", "conflict"]]);
+    expect(conflicts[0].question).toBe(
+      "Earlier you told me you don't have children, but now it sounds like your executor is your son. Which is correct?",
+    );
+  });
+
+  it("'my son' as executor, then 'no children': also blocked and asked", () => {
+    const s1 = stateWith([set("executor.relationship", "daughter")]);
+    const { state, conflicts } = applyUpdates(s1, [set("has_children", false)]);
+    expect(state.fields.has_children).toBeNull();
+    expect(conflicts[0].question).toMatch(/your executor is your daughter/);
+  });
+
+  it.each(["son", "my eldest daughter", "Stepson", "child"])("treats executor %j as the user's own child", (rel) => {
+    const s1 = stateWith([set("has_children", false)]);
+    expect(applyUpdates(s1, [set("executor.relationship", rel)]).conflicts).toHaveLength(1);
+  });
+
+  it.each(["son-in-law", "grandson", "godson", "brother", "mother"])("does not treat executor %j as the user's own child", (rel) => {
+    const s1 = stateWith([set("has_children", false)]);
+    const { state, conflicts } = applyUpdates(s1, [set("executor.relationship", rel)]);
+    expect(conflicts).toHaveLength(0);
+    expect(state.fields.executor.relationship).toBe(rel);
+  });
+
+  it("an executor who is the user's son is fine when they do have children", () => {
+    const s1 = stateWith([set("has_children", true), set("children_names", ["James"])]);
+    expect(applyUpdates(s1, [set("executor.relationship", "son")]).conflicts).toHaveLength(0);
+  });
+
   it("model flips both children fields without a correction: blocked, ONE question naming the child", () => {
     const s1 = stateWith([set("has_children", false)]);
     const { state, conflicts } = applyUpdates(s1, [

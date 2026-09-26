@@ -250,7 +250,7 @@ function HowItWorks() {
         </ol>
 
         <div data-reveal className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-cream/80">
-          <span>125 automated tests · 14 live model evals</span>
+          <span>138 automated tests · 14 live model evals</span>
           <span>Automatic fallback across 5 models from 3 providers</span>
           <a href={REPO} className="font-bold text-lime underline-offset-4 hover:underline">
             Read the code and design notes →
