@@ -21,7 +21,7 @@ A conversational interview that collects structured information and builds a dra
 
 **[Live demo ↗](https://parthiv-wenup-document-intake-assistant.vercel.app)** · **[AI log](AI_LOG.md)** · **[Try these in 2 minutes!](#try-these-2-minutes)**
 
-The core idea: **the model proposes, the code decides.** The LLM reads the conversation and proposes field updates as strict JSON. Deterministic, tested TypeScript validates every proposal against a schema, refuses contradictions and unbacked overwrites, and owns the state. The draft document is a pure function of that validated state.
+The core idea: **the model proposes, the code decides.** The LLM reads the conversation and proposes field updates as strict JSON. Deterministic, tested TypeScript validates every proposal against a schema, refuses contradictions and unbacked overwrites, and owns the state. The draft document is a pure function of that validated state. If a model fails, the app keeps going: malformed output gets one repair retry, an unavailable or rate-limited model hands over to the next in a chain of five models across three providers (Groq, Google Gemini, OpenRouter), and if none respond the user gets a safe reply instead of a crash. With no API key at all, it runs in a scripted demo mode.
 
 ```mermaid
 flowchart LR
